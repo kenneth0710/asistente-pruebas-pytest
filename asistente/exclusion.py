@@ -1,65 +1,67 @@
-# asistente/exclusion.py
+"""Lista de exclusión del asistente (HU-07).
+
+Contrato en el README, sección «Funcionalidad de la semana 5».
+Implementación propuesta por ChatGPT y refactorizada (bitácora, entradas 5 y 6).
+"""
 
 from fnmatch import fnmatchcase
 
 
 class ArchivoExcluidoError(Exception):
-    """Se lanza cuando se solicita revisar un archivo excluido."""
+    """El desarrollador pidió un archivo que está en la lista de exclusión."""
 
-    pass
+
+def _normalizar_ruta(ruta: str) -> str:
+    """Convierte las barras invertidas de Windows en barras normales."""
+    return ruta.replace("\\", "/")
+
+
+def _esta_excluido(ruta: str, patrones_en_minuscula: list[str]) -> bool:
+    """Indica si la ruta coincide con algún patrón, por ruta completa o por nombre.
+
+    La ruta debe venir normalizada con «/» y los patrones normalizados y en
+    minúscula; así la comparación no distingue mayúsculas en ningún sistema.
+    """
+    ruta_minuscula = ruta.lower()
+    nombre_archivo = ruta_minuscula.rsplit("/", 1)[-1]
+
+    for patron in patrones_en_minuscula:
+        if fnmatchcase(ruta_minuscula, patron) or fnmatchcase(nombre_archivo, patron):
+            return True
+
+    return False
 
 
 def seleccionar_archivos(
     rutas: list[str],
     patrones: list[str],
-    archivo_pedido: str | None = None
+    archivo_pedido: str | None = None,
 ) -> list[str]:
+    """Devuelve, en una lista nueva y en el mismo orden, las rutas que se pueden enviar a la IA.
+
+    Si archivo_pedido está excluido lanza ArchivoExcluidoError y no se envía nada.
     """
-    Selecciona los archivos permitidos según los patrones de exclusión.
+    # Normalizar las rutas, los patrones y el archivo pedido una sola vez.
+    rutas_normalizadas = [_normalizar_ruta(ruta) for ruta in rutas]
+    patrones_en_minuscula = [_normalizar_ruta(patron).lower() for patron in patrones]
+    pedido_normalizado = (
+        _normalizar_ruta(archivo_pedido) if archivo_pedido is not None else None
+    )
 
-    Las rutas se normalizan usando '/' y las comparaciones
-    no distinguen mayúsculas de minúsculas.
-    """
+    if pedido_normalizado is not None and _esta_excluido(
+        pedido_normalizado, patrones_en_minuscula
+    ):
+        raise ArchivoExcluidoError(f"El archivo '{pedido_normalizado}' está excluido.")
 
-    def normalizar(ruta: str) -> str:
-        return ruta.replace("\\", "/")
-
-    def esta_excluido(ruta: str) -> bool:
-        ruta_normalizada = normalizar(ruta).lower()
-        nombre_archivo = ruta_normalizada.rsplit("/", 1)[-1]
-
-        for patron in patrones:
-            patron_normalizado = normalizar(patron).lower()
-
-            if (
-                fnmatchcase(ruta_normalizada, patron_normalizado)
-                or fnmatchcase(nombre_archivo, patron_normalizado)
-            ):
-                return True
-
-        return False
-
-    # Si el archivo solicitado está excluido, se lanza una excepción.
-    if archivo_pedido is not None and esta_excluido(archivo_pedido):
-        raise ArchivoExcluidoError(
-            f"El archivo '{normalizar(archivo_pedido)}' está excluido."
-        )
-
-    # Filtrar las rutas conservando su orden y las repeticiones.
+    # Filtrar las rutas permitidas conservando su orden y sus repeticiones.
     resultado = [
-        normalizar(ruta)
-        for ruta in rutas
-        if not esta_excluido(ruta)
+        ruta
+        for ruta in rutas_normalizadas
+        if not _esta_excluido(ruta, patrones_en_minuscula)
     ]
 
-    # Agregar el archivo solicitado si está permitido y no existe
-    # ya en las rutas después de normalizarlas.
-    if archivo_pedido is not None:
-        pedido_normalizado = normalizar(archivo_pedido)
-
-        rutas_normalizadas = [normalizar(ruta) for ruta in rutas]
-
-        if pedido_normalizado not in rutas_normalizadas:
-            resultado.append(pedido_normalizado)
+    # Agregar el archivo pedido si todavía no estaba en las rutas.
+    if pedido_normalizado is not None and pedido_normalizado not in rutas_normalizadas:
+        resultado.append(pedido_normalizado)
 
     return resultado

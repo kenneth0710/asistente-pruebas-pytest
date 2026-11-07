@@ -1,0 +1,5 @@
+# Lista de exclusión del asistente (HU-07). Patrones tipo glob.
+# Lo que coincida aquí nunca se envía al servicio de IA.
+.env
+clientes_panaderia.csv
+pedidos.db

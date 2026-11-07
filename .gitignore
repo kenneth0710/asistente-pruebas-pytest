@@ -1,0 +1,11 @@
+# Secretos y datos reales: nunca al repositorio
+.env
+*.env
+clientes_panaderia.csv
+pedidos.db
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

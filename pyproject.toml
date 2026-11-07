@@ -1,0 +1,11 @@
+[project]
+name = "asistente-pruebas-pytest"
+version = "0.1.0"
+description = "Asistente de IA que propone pruebas pytest a partir de los criterios de aceptación del módulo de pedidos"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "criterio(id): criterio de aceptación que cubre la prueba, por ejemplo HU-07-E1",
+]

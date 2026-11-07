@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 markers = [
     "criterio(id): criterio de aceptación que cubre la prueba, por ejemplo HU-07-E1",
 ]

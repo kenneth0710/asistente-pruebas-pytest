@@ -1,0 +1,9 @@
+Actúa como revisor de código Python que refactoriza sin cambiar el comportamiento.
+
+Contexto: tu implementación de asistente/exclusion.py hace pasar las 14 pruebas (todo en verde). Ahora quiero hacer al menos un refactor antes de seguir. Las pruebas no se pueden modificar y deben seguir pasando. El código debe ser fácil de explicar en clase, porque el docente puede pedirme que explique cualquier línea.
+
+Tarea: revisa tu implementación y propón refactors que mejoren el código sin cambiar lo que hace: nombres más claros, eliminar duplicación (por ejemplo, normalizar varias veces la misma ruta o los mismos patrones), funciones anidadas que convenga sacar, código innecesario o valores mágicos.
+
+Formato: (1) una lista numerada con cada cambio por separado: qué cambias, por qué mejora el código y si existe algún riesgo de cambiar el comportamiento; (2) después, un solo bloque de código con el archivo completo asistente/exclusion.py ya refactorizado.
+
+Restricciones: no cambies la firma ni el nombre de la excepción; no agregues funcionalidades nuevas ni dependencias; solo la librería estándar; si un cambio podría alterar el comportamiento en algún caso, márcalo como riesgoso en vez de aplicarlo.

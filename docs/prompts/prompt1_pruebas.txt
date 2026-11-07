@@ -1,0 +1,28 @@
+Actúa como desarrollador Python que trabaja con pruebas primero (TDD).
+
+Contexto: estoy construyendo un asistente de IA en forma de CLI en Python que propone pruebas pytest para el módulo de pedidos de una app de panadería. Antes de enviar archivos a un servicio de IA externo, el asistente debe ignorar los archivos de una lista de exclusión (.asistenteignore). Esta es la historia y su contrato:
+
+HU-07. Como líder del equipo, quiero que el asistente ignore los archivos de una lista de exclusión, para que las claves y los datos reales de clientes no salgan a una IA externa.
+- HU-07-E1: Dado que la lista de exclusión contiene .env, clientes_panaderia.csv y pedidos.db, cuando el desarrollador pide pruebas para el módulo de pedidos, entonces ninguno de esos 3 archivos se incluye en lo que se envía al servicio de IA.
+- HU-07-E2 (error): Dado que .env está en la lista de exclusión, cuando el desarrollador pide al asistente revisar .env, entonces el asistente no envía el archivo y avisa que está excluido.
+
+Contrato:
+- Firma: seleccionar_archivos(rutas: list[str], patrones: list[str], archivo_pedido: str | None = None) -> list[str], en asistente/exclusion.py, y la excepción ArchivoExcluidoError en el mismo módulo.
+- Recibe: rutas relativas a la raíz del repositorio (con / o con \ de Windows); patrones tipo glob de .asistenteignore ya sin comentarios; archivo_pedido es la ruta que el desarrollador pidió revisar con --archivo, o None.
+- Devuelve: una lista nueva con las rutas permitidas, en el mismo orden en que llegaron y escritas con /. Si archivo_pedido está permitido y no estaba en rutas, se agrega al final.
+- Error: si archivo_pedido coincide con un patrón, lanza ArchivoExcluidoError con la ruta en el mensaje y no devuelve nada.
+- Regla: una ruta queda excluida si un patrón coincide con la ruta completa o con el nombre del archivo (así .env excluye config/.env). Distingue mayúsculas y minúsculas, igual en Windows, macOS y Ubuntu.
+- Supuestos: no lee el disco; no modifica las listas recibidas; no soporta patrones de negación (!); las rutas repetidas se devuelven tal como llegaron.
+- Casos límite: rutas vacía -> []; patrones vacía -> todas las rutas; archivo excluido en subcarpeta (config/.env); ruta con \ de Windows; nombre parecido (.env.ejemplo no coincide con .env).
+- Ejemplos:
+  1. (["app/pedidos/validaciones.py", ".env", "datos/clientes_panaderia.csv", "pedidos.db"], [".env", "clientes_panaderia.csv", "pedidos.db"]) -> ["app/pedidos/validaciones.py"]
+  2. (["app\pedidos\validaciones.py", "config\.env"], [".env"]) -> ["app/pedidos/validaciones.py"]
+  3. ([], [".env"]) -> []
+  4. (["app/pedidos/validaciones.py"], [".env"], archivo_pedido="tests/pedidos/test_hu03.py") -> ["app/pedidos/validaciones.py", "tests/pedidos/test_hu03.py"]
+  5. (["app/pedidos/validaciones.py"], [".env"], archivo_pedido=".env") -> ArchivoExcluidoError
+
+Tarea: escribe SOLO las pruebas en pytest para este contrato. Todavía no escribas la implementación.
+
+Formato: un solo archivo tests/test_hu07_exclusion.py. Cada prueba debe llevar la marca @pytest.mark.criterio("HU-07-E1") o @pytest.mark.criterio("HU-07-E2") según el criterio que cubre, y un nombre en español que empiece por test_HU07_ y diga qué prueba (por ejemplo test_HU07_E1_env_no_se_envia). Al final, indica en una tabla qué prueba es caso normal, caso límite o caso de error.
+
+Restricciones: al menos 2 casos normales, 2 casos límite y 1 caso de error (el del escenario HU-07-E2). Usa solo datos inventados. Solo librería estándar y pytest. No inventes comportamientos que no estén en el contrato; si algo no está claro, escríbelo como pregunta al final en vez de suponerlo.

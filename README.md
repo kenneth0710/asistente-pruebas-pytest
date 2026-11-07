@@ -42,7 +42,7 @@ Ubicación: `asistente/exclusion.py`.
 
 **Qué devuelve**
 
-Una lista nueva con las rutas que se pueden enviar a la IA, en el mismo orden en que llegaron y escritas con `/`. Si `archivo_pedido` está permitido y no estaba en `rutas`, se agrega al final.
+Una lista nueva con las rutas que se pueden enviar a la IA, en el mismo orden en que llegaron y escritas con `/`. Si `archivo_pedido` está permitido y no estaba en `rutas`, se agrega al final. Para saber si «ya estaba», se compara después de pasar las dos rutas a `/` (`app\pedidos\validaciones.py` y `app/pedidos/validaciones.py` son la misma ruta y no se repite).
 
 **Error**
 
@@ -50,7 +50,9 @@ Si `archivo_pedido` coincide con algún patrón, lanza `ArchivoExcluidoError` co
 
 **Regla de coincidencia**
 
-Una ruta queda excluida si un patrón coincide con la ruta completa o con el nombre del archivo (sin carpetas). Así, `.env` excluye también `config/.env`. La comparación distingue mayúsculas y minúsculas y se hace igual en los tres sistemas operativos.
+Una ruta queda excluida si un patrón coincide con la ruta completa o con el nombre del archivo (sin carpetas). Así, `.env` excluye también `config/.env`, y `*.db` excluye `datos/pedidos.db`. La comparación **no** distingue mayúsculas y minúsculas: `.ENV` también queda excluido, porque en Windows y macOS es el mismo archivo que `.env`. Se hace igual en los tres sistemas operativos (RNF-04), y ante la duda se excluye (RNF-06).
+
+> Cambio del contrato (7/11/2026): la primera versión decía que la comparación distinguía mayúsculas. Al revisar las pruebas que propuso el asistente vi que eso dejaba salir `.ENV`, que en Windows es el mismo `.env`. Ver la entrada 2 de la bitácora.
 
 **Supuestos**
 
@@ -66,6 +68,8 @@ Una ruta queda excluida si un patrón coincide con la ruta completa o con el nom
 - Archivo excluido dentro de una subcarpeta (`config/.env`).
 - Ruta con `\` de Windows (`datos\clientes_panaderia.csv`).
 - Nombre parecido a uno excluido: `.env.ejemplo` no coincide con `.env` y sí se envía.
+- Mismo nombre con otras mayúsculas: `.ENV` se excluye igual que `.env`.
+- `archivo_pedido` que ya venía en `rutas` (con otra barra): no se agrega dos veces.
 
 **Ejemplos (entrada → salida)**
 
@@ -76,6 +80,8 @@ Una ruta queda excluida si un patrón coincide con la ruta completa o con el nom
 | 3 | `[]` | `[".env"]` | `None` | `[]` |
 | 4 | `["app/pedidos/validaciones.py"]` | `[".env"]` | `"tests/pedidos/test_hu03.py"` | `["app/pedidos/validaciones.py", "tests/pedidos/test_hu03.py"]` |
 | 5 | `["app/pedidos/validaciones.py"]` | `[".env"]` | `".env"` | `ArchivoExcluidoError` |
+| 6 | `["app/pedidos/validaciones.py", "datos/pedidos.db"]` | `["*.db"]` | `None` | `["app/pedidos/validaciones.py"]` |
+| 7 | `[".ENV", "app/pedidos/validaciones.py"]` | `[".env"]` | `None` | `["app/pedidos/validaciones.py"]` |
 
 ### Cómo ejecutar las pruebas
 

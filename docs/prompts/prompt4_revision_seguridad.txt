@@ -1,0 +1,265 @@
+Actúa como revisor de código Python con experiencia en seguridad.
+
+Contexto: asistente de IA en forma de CLI en Python que propone pruebas pytest para el módulo de pedidos de una app de panadería. Antes de enviar archivos a un servicio de IA externo (API de Gemini), el asistente debe ignorar los archivos de una lista de exclusión (.asistenteignore) para que las claves (.env) y los datos reales de clientes (clientes_panaderia.csv, pedidos.db) nunca salgan del computador. El equipo trabaja en Windows 11, macOS y Ubuntu. No hay base de datos ni usuarios con contraseña en el asistente.
+
+Reglas del proyecto y ADR:
+- HU-07 (Must): el asistente ignora los archivos de la lista de exclusión. HU-07-E1: si la lista contiene .env, clientes_panaderia.csv y pedidos.db, ninguno se envía a la IA. HU-07-E2 (error): si el desarrollador pide explícitamente revisar .env, el asistente no lo envía y avisa que está excluido.
+- RNF-04: funcionar sin cambios en Windows 11, macOS y Ubuntu, incluido el manejo de rutas. RNF-06: 0 archivos de la lista de exclusión enviados a la IA.
+- ADR-001: CLI en Python con solo la librería estándar para el filtro, plugin de pytest y GitHub Actions; la lista de exclusión es el archivo .asistenteignore con patrones tipo glob; la clave de Gemini vive en el .env de cada desarrollador.
+- Contrato: seleccionar_archivos(rutas, patrones, archivo_pedido=None) devuelve una lista nueva con las rutas permitidas, en el mismo orden y con "/"; si archivo_pedido está excluido lanza ArchivoExcluidoError; una ruta queda excluida si un patrón coincide con la ruta completa o con el nombre del archivo; no distingue mayúsculas; no lee el disco.
+
+Código (asistente/exclusion.py):
+
+     1	"""Lista de exclusión del asistente (HU-07).
+     2	
+     3	Contrato en el README, sección «Funcionalidad de la semana 5».
+     4	Implementación propuesta por ChatGPT y refactorizada (bitácora, entradas 5 y 6).
+     5	"""
+     6	
+     7	from fnmatch import fnmatchcase
+     8	
+     9	
+    10	class ArchivoExcluidoError(Exception):
+    11	    """El desarrollador pidió un archivo que está en la lista de exclusión."""
+    12	
+    13	
+    14	def _normalizar_ruta(ruta: str) -> str:
+    15	    """Convierte las barras invertidas de Windows en barras normales."""
+    16	    return ruta.replace("\\", "/")
+    17	
+    18	
+    19	def _esta_excluido(ruta: str, patrones_en_minuscula: list[str]) -> bool:
+    20	    """Indica si la ruta coincide con algún patrón, por ruta completa o por nombre.
+    21	
+    22	    La ruta debe venir normalizada con «/» y los patrones normalizados y en
+    23	    minúscula; así la comparación no distingue mayúsculas en ningún sistema.
+    24	    """
+    25	    ruta_minuscula = ruta.lower()
+    26	    nombre_archivo = ruta_minuscula.rsplit("/", 1)[-1]
+    27	
+    28	    for patron in patrones_en_minuscula:
+    29	        if fnmatchcase(ruta_minuscula, patron) or fnmatchcase(nombre_archivo, patron):
+    30	            return True
+    31	
+    32	    return False
+    33	
+    34	
+    35	def seleccionar_archivos(
+    36	    rutas: list[str],
+    37	    patrones: list[str],
+    38	    archivo_pedido: str | None = None,
+    39	) -> list[str]:
+    40	    """Devuelve, en una lista nueva y en el mismo orden, las rutas que se pueden enviar a la IA.
+    41	
+    42	    Si archivo_pedido está excluido lanza ArchivoExcluidoError y no se envía nada.
+    43	    """
+    44	    # Normalizar las rutas, los patrones y el archivo pedido una sola vez.
+    45	    rutas_normalizadas = [_normalizar_ruta(ruta) for ruta in rutas]
+    46	    patrones_en_minuscula = [_normalizar_ruta(patron).lower() for patron in patrones]
+    47	    pedido_normalizado = (
+    48	        _normalizar_ruta(archivo_pedido) if archivo_pedido is not None else None
+    49	    )
+    50	
+    51	    if pedido_normalizado is not None and _esta_excluido(
+    52	        pedido_normalizado, patrones_en_minuscula
+    53	    ):
+    54	        raise ArchivoExcluidoError(f"El archivo '{pedido_normalizado}' está excluido.")
+    55	
+    56	    # Filtrar las rutas permitidas conservando su orden y sus repeticiones.
+    57	    resultado = [
+    58	        ruta
+    59	        for ruta in rutas_normalizadas
+    60	        if not _esta_excluido(ruta, patrones_en_minuscula)
+    61	    ]
+    62	
+    63	    # Agregar el archivo pedido si todavía no estaba en las rutas.
+    64	    if pedido_normalizado is not None and pedido_normalizado not in rutas_normalizadas:
+    65	        resultado.append(pedido_normalizado)
+    66	
+    67	    return resultado
+
+Pruebas actuales (tests/test_hu07_exclusion.py), todas pasan:
+
+"""Pruebas de la HU-07: el asistente ignora los archivos de la lista de exclusión.
+
+Base propuesta por ChatGPT (bitácora, entrada 1) y revisada a mano:
+- se rechazó la prueba que esperaba enviar «.ENV» (entrada 2) y se cambió el contrato;
+- se agregaron las pruebas de comodín y de archivo pedido repetido (entrada 3);
+- se agregó la comprobación de que se devuelve una lista nueva.
+Todos los datos son inventados.
+"""
+
+import pytest
+
+from asistente.exclusion import ArchivoExcluidoError, seleccionar_archivos
+
+
+# =====================================================
+# HU-07-E1: los archivos excluidos no se envían a la IA
+# =====================================================
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_env_clientes_y_pedidos_no_se_envian():
+    rutas = [
+        "app/pedidos/validaciones.py",
+        ".env",
+        "datos/clientes_panaderia.csv",
+        "pedidos.db",
+    ]
+    patrones = [".env", "clientes_panaderia.csv", "pedidos.db"]
+
+    resultado = seleccionar_archivos(rutas, patrones)
+
+    assert resultado == ["app/pedidos/validaciones.py"]
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_conserva_el_orden_de_archivos_permitidos():
+    rutas = [
+        "app/pedidos/modelos.py",
+        "app/pedidos/validaciones.py",
+        ".env",
+        "app/pedidos/servicio.py",
+    ]
+    patrones = [".env"]
+
+    resultado = seleccionar_archivos(rutas, patrones)
+
+    assert resultado == [
+        "app/pedidos/modelos.py",
+        "app/pedidos/validaciones.py",
+        "app/pedidos/servicio.py",
+    ]
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_agrega_archivo_pedido_permitido_al_final():
+    rutas = ["app/pedidos/validaciones.py"]
+    patrones = [".env"]
+
+    resultado = seleccionar_archivos(rutas, patrones, "tests/pedidos/test_hu03.py")
+
+    assert resultado == [
+        "app/pedidos/validaciones.py",
+        "tests/pedidos/test_hu03.py",
+    ]
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_patron_con_comodin_excluye_por_extension():
+    rutas = ["app/pedidos/validaciones.py", "datos/pedidos.db", "copia.db"]
+    patrones = ["*.db"]
+
+    resultado = seleccionar_archivos(rutas, patrones)
+
+    assert resultado == ["app/pedidos/validaciones.py"]
+
+
+# =====================================================
+# HU-07-E1: casos límite
+# =====================================================
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_lista_de_rutas_vacia_devuelve_lista_vacia():
+    resultado = seleccionar_archivos([], [".env"])
+
+    assert resultado == []
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_sin_patrones_se_envian_todas_en_una_lista_nueva():
+    rutas = [".env", "pedidos.db", "app/pedidos/validaciones.py"]
+
+    resultado = seleccionar_archivos(rutas, [])
+
+    assert resultado == rutas
+    assert resultado is not rutas
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_archivo_excluido_en_subcarpeta_no_se_envia():
+    rutas = ["app/pedidos/validaciones.py", "config/.env", "tests/test_pedidos.py"]
+    patrones = [".env"]
+
+    resultado = seleccionar_archivos(rutas, patrones)
+
+    assert resultado == ["app/pedidos/validaciones.py", "tests/test_pedidos.py"]
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_rutas_de_windows_se_normalizan_y_se_filtran():
+    rutas = [r"app\pedidos\validaciones.py", r"config\.env"]
+    patrones = [".env"]
+
+    resultado = seleccionar_archivos(rutas, patrones)
+
+    assert resultado == ["app/pedidos/validaciones.py"]
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_archivo_con_nombre_parecido_si_se_envia():
+    rutas = [".env.ejemplo", "app/pedidos/validaciones.py"]
+    patrones = [".env"]
+
+    resultado = seleccionar_archivos(rutas, patrones)
+
+    assert resultado == [".env.ejemplo", "app/pedidos/validaciones.py"]
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_env_en_mayusculas_tampoco_se_envia():
+    rutas = [".env", ".ENV", "config/.Env", "app/pedidos/validaciones.py"]
+    patrones = [".env"]
+
+    resultado = seleccionar_archivos(rutas, patrones)
+
+    assert resultado == ["app/pedidos/validaciones.py"]
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_conserva_rutas_repetidas():
+    rutas = ["app/pedidos/modelos.py", "app/pedidos/modelos.py", ".env"]
+    patrones = [".env"]
+
+    resultado = seleccionar_archivos(rutas, patrones)
+
+    assert resultado == ["app/pedidos/modelos.py", "app/pedidos/modelos.py"]
+
+
+@pytest.mark.criterio("HU-07-E1")
+def test_HU07_E1_archivo_pedido_que_ya_venia_no_se_repite():
+    rutas = ["app/pedidos/validaciones.py"]
+    patrones = [".env"]
+
+    resultado = seleccionar_archivos(rutas, patrones, r"app\pedidos\validaciones.py")
+
+    assert resultado == ["app/pedidos/validaciones.py"]
+
+
+# =====================================================
+# HU-07-E2 (error): pedir explícitamente un archivo excluido
+# =====================================================
+
+
+@pytest.mark.criterio("HU-07-E2")
+def test_HU07_E2_pedir_env_lanza_error_y_avisa_la_ruta():
+    with pytest.raises(ArchivoExcluidoError) as error:
+        seleccionar_archivos(["app/pedidos/validaciones.py"], [".env"], ".env")
+
+    assert ".env" in str(error.value)
+
+
+@pytest.mark.criterio("HU-07-E2")
+def test_HU07_E2_pedir_env_en_subcarpeta_lanza_error():
+    with pytest.raises(ArchivoExcluidoError) as error:
+        seleccionar_archivos(["app/pedidos/validaciones.py"], [".env"], "config/.env")
+
+    assert "config/.env" in str(error.value)
+
+Tarea: revisa corrección, legibilidad y seguridad: inyección, secretos, contraseñas, control de acceso y dependencias. En este proyecto el «control de acceso» es el filtro de exclusión: piensa en rutas o nombres de archivo que un desarrollador o un archivo del repositorio podrían usar para que un archivo excluido termine enviándose a la IA.
+
+Formato: tabla con columnas: línea | problema | severidad (alta, media, baja) | corrección sugerida. Usa los números de línea del código de arriba. Si un punto (inyección, secretos, contraseñas, control de acceso, dependencias) no aplica, dilo en una línea con la razón.
+
+Restricciones: No reescribas todo el código. Separa los problemas seguros de las sospechas que habría que verificar, en dos tablas distintas.

@@ -1,0 +1,17 @@
+Actúa como desarrollador que documenta un proyecto de Python para otros estudiantes.
+
+Contexto: este es el repositorio asistente-pruebas-pytest (https://github.com/kenneth0710/asistente-pruebas-pytest). Datos reales, no inventes otros:
+- Qué es: asistente de IA que propone pruebas pytest a partir de los criterios de aceptación del módulo de pedidos de una app para una panadería de barrio. Lo usa un equipo de 5 estudiantes. En esta versión está construida la funcionalidad HU-07: el filtro de la lista de exclusión (.asistenteignore), que impide que .env, clientes_panaderia.csv y pedidos.db se envíen al servicio de IA. La CLI completa (ADR-001: CLI en Python + plugin de pytest + GitHub Actions) todavía no está construida; hoy el código es el módulo asistente/exclusion.py con la función seleccionar_archivos(rutas, patrones, archivo_pedido=None) y la excepción ArchivoExcluidoError.
+- Requisitos: Python 3.11 o superior. El código solo usa la librería estándar. Herramientas de desarrollo con versión fijada en requirements-dev.txt: pytest==9.2.0, ruff==0.17.5, pip-audit==2.10.1.
+- Instalación (probada): git clone https://github.com/kenneth0710/asistente-pruebas-pytest.git ; cd asistente-pruebas-pytest ; python -m venv .venv ; activar (.venv\Scripts\activate en Windows, source .venv/bin/activate en macOS y Ubuntu) ; pip install -r requirements-dev.txt ; copiar .env.example como .env (la clave GEMINI_API_KEY se usará cuando exista la CLI; el .env nunca se sube).
+- Ejecución: como la CLI aún no existe, se usa la función desde Python. Ejemplo: python -c "from asistente.exclusion import seleccionar_archivos; print(seleccionar_archivos(['app/pedidos/validaciones.py', '.env'], ['.env']))" imprime ['app/pedidos/validaciones.py'].
+- Pruebas: pytest (24 pruebas en tests/test_hu07_exclusion.py y tests/test_hu07_abuso.py). Linter: ruff check . (reglas E, F, B, S en pyproject.toml). Auditoría: pip-audit -r requirements-dev.txt.
+- Estructura: asistente/ (código: __init__.py y exclusion.py), tests/ (pruebas pytest), docs/prompts/ (prompts exactos enviados a la IA), .asistenteignore (lista de exclusión de ejemplo), .env.example, pyproject.toml (configuración de pytest y ruff), requirements-dev.txt, bitacora_ia.md, revision_seguridad.md, LICENSE.
+- Uso de IA: semana 5, ChatGPT propuso las pruebas, la implementación y el refactor de la HU-07; semana 6, ChatGPT hizo una segunda revisión de seguridad, trabajó como agente en la rama agente/pruebas-abuso (pruebas de abuso y corrección, revisadas antes de integrar) y redactó los docstrings y este README. Cada sugerencia se verificó con pruebas; el detalle está en bitacora_ia.md y el informe de seguridad en revision_seguridad.md.
+- Autor y licencia: Kenneth Ramírez Burgos, Fundación Escuela Tecnológica de Neiva «Jesús Oviedo Pérez», Seminario de IA aplicada al ciclo de vida del software, 2026. Licencia MIT (archivo LICENSE).
+
+Tarea: escribe el README.md con exactamente estas ocho secciones, en este orden y con estos títulos: «Qué es», «Requisitos», «Instalación», «Ejecución», «Pruebas», «Estructura», «Uso de IA», «Autor y licencia». En «Qué es» usa una frase que diga qué problema resuelve y para quién.
+
+Formato: un solo bloque de código markdown con el README completo, empezando por el título «# Asistente de pruebas pytest». Los comandos van en bloques de código.
+
+Restricciones: usa solo los datos de arriba; no inventes comandos, archivos, badges ni funcionalidades. No incluyas la sección del contrato de la semana 5 (la agrego yo debajo sin cambios).

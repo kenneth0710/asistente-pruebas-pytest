@@ -3,7 +3,9 @@
 Proyecto: Asistente de IA que propone pruebas pytest a partir de los criterios de aceptación del módulo de pedidos de una app para panadería de barrio
 Estudiante: Kenneth Ramírez Burgos
 Funcionalidad: HU-07 Lista de exclusión de archivos (`seleccionar_archivos`)
-Asistente usado: ChatGPT (OpenAI), versión web, modo chat, en una sola conversación el 7 de noviembre de 2026. Le di como contexto el contrato y las pruebas. El código lo pegué y lo ejecuté en VS Code con pytest.
+Asistente usado:
+- Semana 5: ChatGPT (OpenAI), versión web, modo chat, en una sola conversación el 7 de noviembre de 2026. Le di como contexto el contrato y las pruebas. El código lo pegué y lo ejecuté en VS Code con pytest.
+- Semana 6: ChatGPT, versión web, en un chat nuevo el 14 de noviembre de 2026. Lo usé en modo chat para la revisión, las docstrings y el README, y como agente delimitado en la rama `agente/pruebas-abuso`. Sus entradas empiezan en la sección «Semana 6».
 
 Los prompts exactos están en [`docs/prompts/`](docs/prompts/): uno para las pruebas, otro para la implementación y otro para el refactor. Siguen la estructura del curso (rol, contexto, tarea, formato y restricciones) y el prompt del OVA «Contrato y pruebas primero».
 
@@ -109,3 +111,103 @@ La implementación de ChatGPT pasó las 14 pruebas a la primera, así que ningun
 ## Reflexión final
 
 Lo que más me ayudó de ChatGPT fue proponer pruebas a partir del contrato: en un minuto tenía 12 pruebas bien nombradas y dos preguntas que mostraron huecos que yo no había visto (comodines y rutas repetidas). La implementación también salió correcta a la primera. Aun así tuve que leer cada línea, porque una prueba en verde no dice si la prueba está bien. El error que más me enseñó no lo atrapó una prueba: estaba en una prueba. ChatGPT siguió al pie de la letra mi contrato y escribió una prueba que aprobaba enviar `.ENV`, que en Windows es el mismo `.env`. Solo los errores sembrados mostraron que esa prueba no protegía nada. En la próxima funcionalidad revisaría el contrato contra los requisitos no funcionales (en este caso RNF-04 y RNF-06) antes de pedir pruebas. También sembraría errores desde el principio para medir si las pruebas sirven, que es la meta de 8 de 10 errores detectados del proyecto.
+
+---
+
+# Semana 6: revisión de seguridad, agente y documentación
+
+Commit revisado: `61a2af1`. El informe completo está en [`revision_seguridad.md`](revision_seguridad.md). Los prompts siguen las plantillas de la clase del 14/11: «Prompt para revisar código con IA» y «Cómo delimitar la tarea de un agente».
+
+### Entrada 7
+
+- **Fecha:** 2026-11-14
+- **Prompt o sugerencia:** Prompt 4 ([`prompt4_revision_seguridad.txt`](docs/prompts/prompt4_revision_seguridad.txt)). Usé el prompt de revisión de la clase en un chat nuevo de ChatGPT, con el código con números de línea, las pruebas, la HU-07, los RNF y el ADR. ChatGPT entregó:
+  - 6 problemas «seguros».
+  - 4 sospechas.
+  - La revisión de los 5 puntos de seguridad.
+  - 7 pruebas recomendadas.
+- **Decisión:** Aceptada con cambios
+- **Por qué:** Verifiqué cada hallazgo antes de usarlo:
+  - Dos son reales en parte (rutas con `..` y patrones sin normalizar), pero su ejemplo `config/../.env` ya se excluía. El problema real aparece con patrones que llevan carpeta, y la IA no lo mostró.
+  - Tres son falsos positivos o repeticiones (líneas 41, 60–61 y 64–65).
+  - Las sospechas no aplican todavía, porque no existe el módulo que envía a Gemini. Quedaron como pendientes.
+  - La IA no encontró las variantes de Windows (`.env `, `.env.`, `.env::$DATA`) ni el aviso E501.
+- **Verificación:** Ejecuté cada ejemplo de la IA y cada evasión contra la versión `61a2af1` con `python -I -c "…seleccionar_archivos(…)"`. La clasificación completa está en la sección 3 de `revision_seguridad.md`.
+- **Commit relacionado:** `3072702` (ruff, `.env.example`, versiones fijadas) y el informe.
+
+### Entrada 8
+
+- **Fecha:** 2026-11-14
+- **Prompt o sugerencia:** En la misma respuesta, ChatGPT recomendó 7 pruebas nuevas: `config/../.env`, `C:\proyecto\.env`, `/home/usuario/proyecto/.env`, `config\..\clientes_panaderia.csv`, archivo pedido `config/../.env`, `.ENV` y `respaldo.db`.
+- **Decisión:** Rechazada
+- **Por qué:** Las 7 ya pasaban con el código revisado, así que no detectan nada nuevo. Agregarlas solo inflaría el conteo de pruebas. En su lugar le pedí al agente las 8 evasiones que sí fallaban, más 1 prueba de error.
+- **Verificación:** Corrí los 7 casos contra `61a2af1` y todos se excluían o lanzaban `ArchivoExcluidoError`.
+- **Commit relacionado:** no aplica (no se agregaron).
+
+### Entrada 9
+
+- **Fecha:** 2026-11-14
+- **Prompt o sugerencia:** Prompt 5 ([`prompt5_agente_pruebas_abuso.txt`](docs/prompts/prompt5_agente_pruebas_abuso.txt)). Usé la plantilla del agente de la clase:
+  - **Rol:** agente en la rama `agente/pruebas-abuso`.
+  - **Tarea:** agregar pruebas de abuso para las 8 evasiones y hacerlas pasar.
+  - **Formato:** resumen de archivos cambiados, pruebas y resultado de pytest.
+  - **Restricciones:** solo `asistente/exclusion.py` y `tests/`, sin instalar paquetes, y detenerse si había que cambiar una prueba existente.
+
+  ChatGPT devolvió `tests/test_hu07_abuso.py` (10 casos parametrizados) y `exclusion.py` corregido.
+- **Decisión:** Aceptada, después de revisar el diff.
+- **Por qué:**
+  - Seguí los permisos de la clase: el agente trabajó en su propia rama y `main` solo recibió el cambio revisado (`git merge --no-ff`).
+  - En el diff confirmé que no tocó `tests/test_hu07_exclusion.py` (0 líneas cambiadas), que no agregó dependencias y que mantuvo la firma.
+  - Su corrección normaliza la ruta solo para comparar, y la ruta permitida se devuelve igual que antes.
+  - Un efecto que acepté a propósito: ahora `otra/datos/clientes_panaderia.csv` también se excluye, porque compara contra cada sufijo de la ruta. Ante la duda se excluye (RNF-06).
+- **Verificación:**
+  - Con sus pruebas y el código anterior: 9 pruebas fallidas y 15 aprobadas (commit en rojo).
+  - Con su corrección: 24 aprobadas.
+  - `ruff check .` sin avisos.
+  - El agente afirmó «10 passed», pero solo corrió sus pruebas nuevas en su entorno, y dijo que no pudo verificar ruff. La suite completa y el linter los corrí yo en el proyecto.
+- **Commit relacionado:** `9780a9c` (pruebas en rojo), `daeb3bb` (corrección) y `2b9aedd` (integración a `main`).
+
+### Entrada 10
+
+- **Fecha:** 2026-11-14
+- **Prompt o sugerencia:** Prompt 6 ([`prompt6_docstrings.txt`](docs/prompts/prompt6_docstrings.txt)). Le pedí docstrings con el formato de la clase (Args, Returns, Raises) sin cambiar ni una línea de código.
+- **Decisión:** Aceptada
+- **Por qué:** Cada docstring dice lo que hace el código. La de `seleccionar_archivos` documenta el error `ArchivoExcluidoError` y que el archivo pedido se agrega al final. Solo le falta mencionar que la comparación no distingue mayúsculas; es una omisión, no algo falso, y está explicado en el contrato del README.
+- **Verificación:**
+  - Comparé el árbol de sintaxis (`ast`) del archivo, sin docstrings, antes y después: la lógica quedó idéntica.
+  - `ruff check .` sin avisos.
+  - 24 pruebas aprobadas.
+- **Commit relacionado:** `4206999`
+
+### Entrada 11
+
+- **Fecha:** 2026-11-14
+- **Prompt o sugerencia:** Prompt 7 ([`prompt7_readme.txt`](docs/prompts/prompt7_readme.txt)). Le pedí el README con las 8 secciones de la clase, dándole solo datos reales del repositorio.
+- **Decisión:** Aceptada
+- **Por qué:**
+  - Usó solo los datos que le di: no inventó comandos ni archivos.
+  - Al copiar la respuesta, los bloques de código llegaron con marcadores de más (```` y títulos en negrita). Solo corregí esos marcadores, sin cambiar el texto.
+  - Debajo dejé, sin cambios, la sección «Funcionalidad de la semana 5» con el contrato.
+- **Verificación:** Probé los comandos del README en una carpeta limpia, clonando el repositorio:
+  - Instalación: `python -m venv .venv` y `pip install -r requirements-dev.txt`.
+  - Activación en PowerShell con `.venv\Scripts\activate`.
+  - `pytest`: 24 aprobadas.
+  - `ruff check .`: limpio.
+  - `pip-audit -r requirements-dev.txt`: sin vulnerabilidades.
+  - El ejemplo de «Ejecución» imprime `['app/pedidos/validaciones.py']`.
+- **Commit relacionado:** `d5977ab`
+
+## Resumen de la semana 6
+
+| Decisión | Cantidad |
+|---|---|
+| Aceptadas | 3 (entradas 9, 10 y 11) |
+| Aceptadas con cambios | 1 (entrada 7) |
+| Rechazadas | 1 (entrada 8) |
+
+## Reflexión de la semana 6
+
+- La revisión con IA sirvió como segunda revisora, pero no reemplazó la mía. Apuntó a la zona correcta (la normalización de rutas), aunque con ejemplos que ya funcionaban.
+- Las evasiones más graves no las vio: los nombres que Windows abre como el mismo `.env`. Las encontré al pensar en cómo se puede abrir el mismo archivo con otro nombre en los tres sistemas operativos del equipo.
+- Usar ChatGPT como agente en una rama, con una instrucción delimitada, funcionó bien. Revisar el diff fue lo que me dio confianza para integrarlo, no su «10 passed», porque ese resultado no incluía las pruebas que ya existían.
+- Para la próxima vez: escribir las pruebas de abuso desde el contrato, antes de pedir el código, y no esperar a la revisión de seguridad.

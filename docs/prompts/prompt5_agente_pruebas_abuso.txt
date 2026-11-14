@@ -1,0 +1,13 @@
+Eres un agente que trabaja en la rama agente/pruebas-abuso.
+
+Contexto: proyecto asistente-pruebas-pytest en Python 3.11+ (pytest, solo librería estándar en el código). Reglas del proyecto: el contrato de seleccionar_archivos que te pasé arriba (lista nueva, mismo orden, rutas con "/", no distingue mayúsculas, ArchivoExcluidoError si archivo_pedido está excluido, no lee el disco) y RNF-04/RNF-06 (igual en Windows, macOS y Ubuntu; 0 archivos excluidos enviados a la IA). Módulo: asistente/exclusion.py. Las pruebas actuales están en tests/test_hu07_exclusion.py.
+
+Verifiqué tu revisión: tus ejemplos con config/../.env, C:\proyecto\.env y /home/usuario/proyecto/.env ya se excluyen hoy, porque se compara el nombre del archivo. Pero sí encontré estas evasiones reales, que hoy dejan pasar el archivo:
+1. Patrón con carpeta "datos/clientes_panaderia.csv": pasan "./datos/clientes_panaderia.csv", "x/../datos/clientes_panaderia.csv", "datos//clientes_panaderia.csv", "C:/repo/datos/clientes_panaderia.csv" y "/home/ana/repo/datos/clientes_panaderia.csv".
+2. Nombres que Windows abre como el mismo archivo, con patrón ".env": pasan ".env " (espacio al final), ".env." (punto al final) y ".env::$DATA" (flujo alternativo de NTFS).
+
+Tarea: agrega pruebas de abuso para esas 8 rutas (todas deben quedar excluidas) y una prueba de error en la que archivo_pedido=".env " lanza ArchivoExcluidoError. Después corrige asistente/exclusion.py para que pasen. Las rutas permitidas se siguen devolviendo como hoy (solo cambiando "\" por "/"); la normalización nueva es solo para decidir si una ruta está excluida. ".env.ejemplo" debe seguir enviándose. Deja también ruff sin avisos con las reglas E,F,B,S y line-length 88 (hoy la línea 40 mide 96 caracteres).
+
+Formato: (1) el archivo nuevo tests/test_hu07_abuso.py completo, con la marca @pytest.mark.criterio("HU-07-E1") o ("HU-07-E2") y nombres en español que empiecen por test_HU07_; (2) el archivo asistente/exclusion.py completo corregido; (3) al terminar, resume: archivos cambiados, pruebas agregadas y resultado esperado de pytest.
+
+Restricciones: solo toca asistente/exclusion.py y tests/. No instales paquetes. No cambies la firma ni el nombre de la excepción. Si tienes que cambiar una prueba existente, detente y pregunta.

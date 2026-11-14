@@ -1,19 +1,38 @@
-"""Lista de exclusión del asistente (HU-07)."""
+"""Documentación del módulo de exclusión correspondiente a la HU-07.
+
+El contrato de las funciones de este módulo está definido en el README.
+"""
 
 from fnmatch import fnmatchcase
 
 
 class ArchivoExcluidoError(Exception):
-    """El desarrollador pidió un archivo que está en la lista de exclusión."""
+    """Indica que el desarrollador solicitó un archivo excluido."""
 
 
 def _normalizar_ruta(ruta: str) -> str:
-    """Convierte las barras invertidas de Windows en barras normales."""
+    """Convierte las barras invertidas de una ruta en barras normales.
+
+    Args:
+        ruta (str): Ruta que se desea normalizar.
+
+    Returns:
+        str: Ruta con las barras invertidas reemplazadas por barras normales.
+    """
     return ruta.replace("\\", "/")
 
 
 def _normalizar_para_comparar(ruta: str) -> str:
-    """Normaliza equivalencias de rutas sin modificar la ruta que se devuelve."""
+    """Normaliza una ruta para comparar sus equivalencias con los patrones.
+
+    Args:
+        ruta (str): Ruta que se desea normalizar para la comparación.
+
+    Returns:
+        str: Ruta con separadores normalizados, componentes vacíos y puntos
+            simples eliminados, componentes especiales procesados y en
+            minúsculas.
+    """
     ruta = _normalizar_ruta(ruta)
     componentes = []
 
@@ -39,7 +58,16 @@ def _normalizar_para_comparar(ruta: str) -> str:
 
 
 def _coincide_con_patron(ruta: str, patron: str) -> bool:
-    """Comprueba el patrón contra la ruta completa o cualquier sufijo."""
+    """Comprueba si un patrón coincide con una ruta completa o alguno de sus sufijos.
+
+    Args:
+        ruta (str): Ruta normalizada que se desea comprobar.
+        patron (str): Patrón glob con el que se compara la ruta.
+
+    Returns:
+        bool: True si el patrón coincide con la ruta completa o algún sufijo;
+            False en caso contrario.
+    """
     componentes = ruta.split("/")
     if fnmatchcase(ruta, patron):
         return True
@@ -51,7 +79,17 @@ def _coincide_con_patron(ruta: str, patron: str) -> bool:
 
 
 def _esta_excluido(ruta: str, patrones_normalizados: list[str]) -> bool:
-    """Indica si la ruta coincide con un patrón por ruta o por nombre."""
+    """Determina si una ruta coincide con alguno de los patrones de exclusión.
+
+    Args:
+        ruta (str): Ruta que se desea comprobar.
+        patrones_normalizados (list[str]): Patrones normalizados que se utilizan
+            para comprobar la exclusión.
+
+    Returns:
+        bool: True si la ruta o su nombre coincide con algún patrón;
+            False en caso contrario.
+    """
     ruta_normalizada = _normalizar_para_comparar(ruta)
     nombre_archivo = ruta_normalizada.rsplit("/", 1)[-1]
 
@@ -69,7 +107,33 @@ def seleccionar_archivos(
     patrones: list[str],
     archivo_pedido: str | None = None,
 ) -> list[str]:
-    """Devuelve las rutas permitidas en una lista nueva y conserva su orden."""
+    """Selecciona las rutas que no coinciden con los patrones de exclusión.
+
+    Normaliza los separadores de las rutas, comprueba la exclusión mediante
+    patrones glob y conserva el orden de las rutas permitidas. Si se proporciona
+    un archivo solicitado que está excluido, lanza una excepción. Si el archivo
+    solicitado no está excluido y no aparece en las rutas originales, lo agrega
+    al final del resultado.
+
+    Args:
+        rutas (list[str]): Lista de rutas que se desean filtrar.
+        patrones (list[str]): Lista de patrones glob utilizados para determinar
+            qué rutas están excluidas.
+        archivo_pedido (str | None): Ruta del archivo solicitado explícitamente.
+            Si está excluido, se lanza una excepción. Si no está excluido y no
+            aparece en las rutas originales, se agrega al resultado.
+            Por defecto es None.
+
+    Returns:
+        list[str]: Nueva lista con las rutas permitidas, en el mismo orden
+            en que aparecen en la entrada, conservando las repeticiones.
+            Las barras invertidas se reemplazan por barras normales.
+            Si corresponde, incluye el archivo solicitado al final.
+
+    Raises:
+        ArchivoExcluidoError: Si el archivo_pedido coincide con alguno de los
+            patrones de exclusión.
+    """
     rutas_normalizadas = [_normalizar_ruta(ruta) for ruta in rutas]
     patrones_normalizados = [
         _normalizar_para_comparar(patron) for patron in patrones

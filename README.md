@@ -1,11 +1,159 @@
 # Asistente de pruebas pytest
 
-Asistente de IA que propone pruebas automáticas (pytest) a partir de los criterios de aceptación del módulo de pedidos de una app para una panadería de barrio.
+## Qué es
 
-Proyecto final del Seminario de Inteligencia Artificial Aplicada al Ciclo de Vida del Software (FET).
-Estudiante: Kenneth Ramírez Burgos.
+Asistente de IA que ayuda a un equipo de cinco estudiantes a proponer pruebas pytest a partir de los criterios de aceptación del módulo de pedidos de una aplicación para una panadería de barrio, evitando que archivos con información sensible se envíen al servicio de IA.
 
-Este repositorio sigue el diseño de la semana 4 (ADR-001): una CLI en Python, un plugin de pytest para la marca `criterio` y un flujo de GitHub Actions. La lista de exclusión vive en el archivo `.asistenteignore`.
+En esta versión está implementada la funcionalidad HU-07: el filtro de la lista de exclusión (`.asistenteignore`), que impide enviar los archivos `.env`, `clientes_panaderia.csv` y `pedidos.db`.
+
+La funcionalidad se encuentra en `asistente/exclusion.py` y cuenta con la función `seleccionar_archivos(rutas, patrones, archivo_pedido=None)` y la excepción `ArchivoExcluidoError`.
+
+La CLI completa definida en el ADR-001 (CLI en Python, plugin de pytest y GitHub Actions) todavía no está construida.
+
+## Requisitos
+
+- Python 3.11 o superior.
+- El código utiliza únicamente la librería estándar de Python.
+- Las herramientas de desarrollo tienen sus versiones fijadas en `requirements-dev.txt`:
+  - `pytest==9.2.0`
+  - `ruff==0.17.5`
+  - `pip-audit==2.10.1`
+
+## Instalación
+
+Clona el repositorio:
+
+```bash
+git clone https://github.com/kenneth0710/asistente-pruebas-pytest.git
+cd asistente-pruebas-pytest
+```
+
+Crea un entorno virtual:
+
+```
+python -m venv .venv
+```
+
+Activa el entorno virtual según tu sistema operativo.
+
+**Windows:**
+
+```
+.venv\Scripts\activate
+```
+
+**macOS y Ubuntu:**
+
+```
+source .venv/bin/activate
+```
+
+Instala las herramientas de desarrollo:
+
+```
+pip install -r requirements-dev.txt
+```
+
+Copia `.env.example` como `.env`. La variable `GEMINI_API_KEY` se utilizará cuando exista la CLI. El archivo `.env` nunca debe subirse al repositorio.
+
+## Ejecución
+Como la CLI todavía no existe, la función se utiliza directamente desde Python.
+
+Ejemplo:
+
+```
+python -c "from asistente.exclusion import seleccionar_archivos; print(seleccionar_archivos(['app/pedidos/validaciones.py', '.env'], ['.env']))"
+```
+
+Resultado esperado:
+
+```
+['app/pedidos/validaciones.py']
+```
+
+En este ejemplo, el filtro excluye `.env` y devuelve únicamente la ruta permitida.
+
+## Pruebas
+Para ejecutar las pruebas automatizadas:
+
+```
+pytest
+```
+
+Actualmente hay 24 pruebas distribuidas en los siguientes archivos:
+
+- `tests/test_hu07_exclusion.py`
+- `tests/test_hu07_abuso.py`
+
+Para ejecutar el análisis estático con Ruff:
+
+```
+ruff check .
+```
+
+La configuración de Ruff utiliza las reglas E, F, B y S, definidas en `pyproject.toml`.
+
+Para auditar las dependencias de desarrollo:
+
+```
+pip-audit -r requirements-dev.txt
+```
+
+## Estructura
+```
+asistente-pruebas-pytest/
+├── asistente/
+│   ├── __init__.py
+│   └── exclusion.py
+├── tests/
+│   ├── test_hu07_exclusion.py
+│   └── test_hu07_abuso.py
+├── docs/
+│   └── prompts/
+├── .asistenteignore
+├── .env.example
+├── pyproject.toml
+├── requirements-dev.txt
+├── bitacora_ia.md
+├── revision_seguridad.md
+├── LICENSE
+└── README.md
+```
+
+Descripción de los elementos principales:
+
+- `asistente/`: contiene el código del proyecto.
+- `tests/`: contiene las pruebas automatizadas con pytest.
+- `docs/prompts/`: almacena los prompts exactos enviados a la IA.
+- `.asistenteignore`: contiene una lista de exclusión de ejemplo.
+- `.env.example`: sirve como plantilla para configurar las variables de entorno.
+- `pyproject.toml`: contiene la configuración de pytest y Ruff.
+- `requirements-dev.txt`: fija las versiones de las herramientas de desarrollo.
+- `bitacora_ia.md`: registra el uso de IA durante el desarrollo.
+- `revision_seguridad.md`: contiene el informe de revisión de seguridad.
+- `LICENSE`: contiene los términos de la licencia MIT.
+
+## Uso de IA
+La IA se utilizó como apoyo durante las semanas 5 y 6 del desarrollo.
+
+**Semana 5:** ChatGPT propuso las pruebas, la implementación y el refactor de la funcionalidad HU-07.
+
+**Semana 6:** ChatGPT realizó una segunda revisión de seguridad, trabajó como agente en la rama `agente/pruebas-abuso` para desarrollar pruebas de abuso y su corrección, y redactó los docstrings y este README.
+
+Las sugerencias realizadas por la IA se verificaron mediante pruebas antes de integrarse. El detalle del proceso se encuentra en `bitacora_ia.md` y el informe de seguridad en `revision_seguridad.md`.
+
+## Autor y licencia
+**Autor:** Kenneth Ramírez Burgos.
+
+**Institución:** Fundación Escuela Tecnológica de Neiva «Jesús Oviedo Pérez».
+
+**Asignatura:** Seminario de IA aplicada al ciclo de vida del software.
+
+**Año:** 2026.
+
+**Licencia:** MIT. Consulta el archivo `LICENSE` para conocer sus términos.
+
+---
 
 ## Funcionalidad de la semana 5
 
@@ -95,7 +243,3 @@ pytest
 ```
 
 `pytest` corre todas las pruebas de `tests/` con un solo comando. La configuración está en `pyproject.toml`.
-
-### Bitácora de uso de IA
-
-Las sugerencias del asistente, con la decisión y la verificación de cada una, están en [`bitacora_ia.md`](bitacora_ia.md).

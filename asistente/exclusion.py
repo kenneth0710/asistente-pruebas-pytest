@@ -1,8 +1,4 @@
-"""Lista de exclusión del asistente (HU-07).
-
-Contrato en el README, sección «Funcionalidad de la semana 5».
-Implementación propuesta por ChatGPT y refactorizada (bitácora, entradas 5 y 6).
-"""
+"""Lista de exclusión del asistente (HU-07)."""
 
 from fnmatch import fnmatchcase
 
@@ -16,17 +12,53 @@ def _normalizar_ruta(ruta: str) -> str:
     return ruta.replace("\\", "/")
 
 
-def _esta_excluido(ruta: str, patrones_en_minuscula: list[str]) -> bool:
-    """Indica si la ruta coincide con algún patrón, por ruta completa o por nombre.
+def _normalizar_para_comparar(ruta: str) -> str:
+    """Normaliza equivalencias de rutas sin modificar la ruta que se devuelve."""
+    ruta = _normalizar_ruta(ruta)
+    componentes = []
 
-    La ruta debe venir normalizada con «/» y los patrones normalizados y en
-    minúscula; así la comparación no distingue mayúsculas en ningún sistema.
-    """
-    ruta_minuscula = ruta.lower()
-    nombre_archivo = ruta_minuscula.rsplit("/", 1)[-1]
+    for componente in ruta.split("/"):
+        if len(componente) == 2 and componente[1] == ":":
+            componente = componente.lower()
+        elif ":" in componente:
+            componente = componente.split(":", 1)[0]
 
-    for patron in patrones_en_minuscula:
-        if fnmatchcase(ruta_minuscula, patron) or fnmatchcase(nombre_archivo, patron):
+        componente = componente.rstrip(" .")
+        if componente in ("", "."):
+            continue
+        if componente == "..":
+            if componentes and componentes[-1] != "..":
+                componentes.pop()
+            elif not ruta.startswith("/"):
+                componentes.append(componente)
+            continue
+        componentes.append(componente)
+
+    prefijo = "/" if ruta.startswith("/") else ""
+    return (prefijo + "/".join(componentes)).lower()
+
+
+def _coincide_con_patron(ruta: str, patron: str) -> bool:
+    """Comprueba el patrón contra la ruta completa o cualquier sufijo."""
+    componentes = ruta.split("/")
+    if fnmatchcase(ruta, patron):
+        return True
+
+    return any(
+        fnmatchcase("/".join(componentes[indice:]), patron)
+        for indice in range(len(componentes))
+    )
+
+
+def _esta_excluido(ruta: str, patrones_normalizados: list[str]) -> bool:
+    """Indica si la ruta coincide con un patrón por ruta o por nombre."""
+    ruta_normalizada = _normalizar_para_comparar(ruta)
+    nombre_archivo = ruta_normalizada.rsplit("/", 1)[-1]
+
+    for patron in patrones_normalizados:
+        if _coincide_con_patron(ruta_normalizada, patron):
+            return True
+        if fnmatchcase(nombre_archivo, patron):
             return True
 
     return False
@@ -37,30 +69,28 @@ def seleccionar_archivos(
     patrones: list[str],
     archivo_pedido: str | None = None,
 ) -> list[str]:
-    """Devuelve, en una lista nueva y en el mismo orden, las rutas que se pueden enviar a la IA.
-
-    Si archivo_pedido está excluido lanza ArchivoExcluidoError y no se envía nada.
-    """
-    # Normalizar las rutas, los patrones y el archivo pedido una sola vez.
+    """Devuelve las rutas permitidas en una lista nueva y conserva su orden."""
     rutas_normalizadas = [_normalizar_ruta(ruta) for ruta in rutas]
-    patrones_en_minuscula = [_normalizar_ruta(patron).lower() for patron in patrones]
+    patrones_normalizados = [
+        _normalizar_para_comparar(patron) for patron in patrones
+    ]
     pedido_normalizado = (
         _normalizar_ruta(archivo_pedido) if archivo_pedido is not None else None
     )
 
     if pedido_normalizado is not None and _esta_excluido(
-        pedido_normalizado, patrones_en_minuscula
+        pedido_normalizado, patrones_normalizados
     ):
-        raise ArchivoExcluidoError(f"El archivo '{pedido_normalizado}' está excluido.")
+        raise ArchivoExcluidoError(
+            f"El archivo '{pedido_normalizado}' está excluido."
+        )
 
-    # Filtrar las rutas permitidas conservando su orden y sus repeticiones.
     resultado = [
         ruta
         for ruta in rutas_normalizadas
-        if not _esta_excluido(ruta, patrones_en_minuscula)
+        if not _esta_excluido(ruta, patrones_normalizados)
     ]
 
-    # Agregar el archivo pedido si todavía no estaba en las rutas.
     if pedido_normalizado is not None and pedido_normalizado not in rutas_normalizadas:
         resultado.append(pedido_normalizado)
 

@@ -10,3 +10,16 @@ pythonpath = ["."]
 markers = [
     "criterio(id): criterio de aceptación que cubre la prueba, por ejemplo HU-07-E1",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+# E: estilo, F: errores, B: errores probables (bugbear), S: seguridad (bandit)
+select = ["E", "F", "B", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+# S101: assert es la forma normal de comprobar en pytest (justificado en revision_seguridad.md)
+"tests/*" = ["S101"]

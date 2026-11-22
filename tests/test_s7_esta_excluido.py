@@ -1,4 +1,3 @@
-
 import pytest
 
 from asistente.exclusion import _esta_excluido
@@ -165,6 +164,12 @@ from asistente.exclusion import _esta_excluido
             "datos/pedidos.db", ["/datos/pedidos.db"], False,
             id="E34",
         ),
+
+        # E37: Partición - archivo de una letra con flujo NTFS sigue excluido.
+        pytest.param(
+            "a:$DATA", ["a"], True,
+            id="E37",
+        ),
     ],
 )
 def test_determinar_si_ruta_esta_excluida(
@@ -173,4 +178,3 @@ def test_determinar_si_ruta_esta_excluida(
     resultado = _esta_excluido(ruta, patrones_normalizados)
 
     assert resultado is esperado
-

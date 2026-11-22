@@ -1,4 +1,3 @@
-
 import pytest
 
 from asistente.exclusion import _normalizar_para_comparar
@@ -176,10 +175,15 @@ from asistente.exclusion import _normalizar_para_comparar
             "/DATOS//./x/../.ENV. ", "/datos/.env",
             id="N36",
         ),
+
+        # N38: Partición - nombre de una letra con flujo NTFS no es una unidad.
+        pytest.param(
+            "a:$DATA", "a",
+            id="N38",
+        ),
     ],
 )
 def test_normalizar_ruta_para_comparar(ruta, esperado):
     resultado = _normalizar_para_comparar(ruta)
 
     assert resultado == esperado
-

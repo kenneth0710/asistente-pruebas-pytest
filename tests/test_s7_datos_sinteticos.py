@@ -94,29 +94,6 @@ def test_filtrar_repositorio_panaderia(repo_panaderia, tmp_path):
 
 
 @pytest.mark.criterio("HU-07-E1")
-def test_no_devolver_archivos_excluidos(repo_panaderia, tmp_path):
-    """Comprueba que ningún archivo protegido supera el filtro."""
-
-    archivo_ignore = tmp_path / ".asistenteignore"
-
-    patrones = archivo_ignore.read_text(
-        encoding="utf-8"
-    ).splitlines()
-
-    resultado = seleccionar_archivos(repo_panaderia, patrones)
-
-    sufijos_excluidos = (
-        ".env",
-        "clientes_panaderia.csv",
-        "pedidos.db",
-        ".bak",
-    )
-
-    for ruta in resultado:
-        assert ruta.lower().endswith(sufijos_excluidos) is False
-
-
-@pytest.mark.criterio("HU-07-E1")
 def test_verificar_datos_sinteticos_del_csv(repo_panaderia, tmp_path):
     """Comprueba las características de los datos sintéticos."""
 

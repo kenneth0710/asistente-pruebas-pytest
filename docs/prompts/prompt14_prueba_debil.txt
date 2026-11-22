@@ -1,0 +1,3 @@
+Revisé tus pruebas de datos sintéticos con las tres preguntas (¿el esperado sale de la regla?, ¿fallaría si rompo el código?, ¿cubre algo que otra no cubre?). Las tres pasan. Pero test_no_devolver_archivos_excluidos es débil y redundante: hice que seleccionar_archivos devolviera siempre [] y esa prueba siguió en verde (solo falló test_filtrar_repositorio_panaderia), y lo que comprueba ya queda cubierto por la lista exacta de test_filtrar_repositorio_panaderia.
+
+Tarea: quita test_no_devolver_archivos_excluidos y deja todo lo demás igual. Devuelve el archivo tests/test_s7_datos_sinteticos.py completo en un solo bloque de código.

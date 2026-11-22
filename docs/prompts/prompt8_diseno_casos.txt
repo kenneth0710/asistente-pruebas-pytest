@@ -1,0 +1,33 @@
+Actúa como analista de pruebas de software.
+
+Contexto: proyecto asistente-pruebas-pytest (Python). Es un asistente de IA que propone pruebas pytest para el módulo de pedidos de una app de panadería; antes de enviar archivos a una IA externa filtra los que están en la lista de exclusión (.asistenteignore), como .env, clientes_panaderia.csv y pedidos.db. Estas son las reglas de tres funciones del módulo asistente/exclusion.py:
+
+REGLA 1. seleccionar_archivos(rutas, patrones, archivo_pedido=None) -> list[str]  (HU-07 E1 y E2, contrato de la semana 5)
+- Devuelve una lista nueva con las rutas que NO están excluidas, en el mismo orden en que llegaron, escritas con "/" en lugar de "\". Las rutas repetidas se conservan.
+- Si archivo_pedido es None, solo filtra.
+- Si archivo_pedido está excluido, lanza ArchivoExcluidoError con la ruta en el mensaje y no devuelve nada.
+- Si archivo_pedido está permitido y no estaba en rutas (comparando después de cambiar "\" por "/"), se agrega al final.
+- Si archivo_pedido está permitido y ya estaba en rutas, no se repite.
+- Una ruta está excluida según la REGLA 3.
+
+REGLA 2. _normalizar_para_comparar(ruta) -> str  (RNF-04 y correcciones H-01 y H-02 de la semana 6)
+Convierte una ruta en una forma única que solo se usa para comparar con los patrones:
+a) "\" se cambia por "/".
+b) Se quitan los componentes vacíos (barras dobles "//") y los componentes ".".
+c) ".." elimina el componente anterior. Si no hay componente anterior: en una ruta relativa el ".." se conserva; en una ruta absoluta (que empieza por "/") se descarta.
+d) A cada componente se le quitan los espacios y los puntos del final (Windows abre ".env " y ".env." como ".env").
+e) Si un componente tiene ":" se corta desde el ":" (flujo de NTFS, ".env::$DATA" es ".env"), excepto una letra de unidad de dos caracteres como "C:".
+f) El resultado queda en minúsculas.
+g) Si la ruta es absoluta, conserva el "/" inicial.
+
+REGLA 3. _esta_excluido(ruta, patrones_normalizados) -> bool  (HU-07, RNF-06)
+- patrones_normalizados son patrones glob ya normalizados con la REGLA 2 (en minúsculas).
+- La ruta se normaliza con la REGLA 2 y queda excluida (True) si algún patrón coincide con: la ruta completa, o cualquier final de la ruta formado por componentes completos (así "datos/clientes_panaderia.csv" excluye "c:/repo/datos/clientes_panaderia.csv"), o el nombre del archivo.
+- Si ningún patrón coincide, o la lista de patrones está vacía, devuelve False.
+- Ante la duda se excluye: RNF-06 exige 0 archivos excluidos enviados a la IA.
+
+Tarea: diseña los casos de prueba de las tres funciones usando particiones de equivalencia y valores límite (para cadenas y listas: vacío, un elemento, varios, repetidos, separadores al inicio o al final, mayúsculas, etc.). Para seleccionar_archivos, que combina varias condiciones, agrega además una tabla de decisión con las condiciones C1 = ¿hay archivo_pedido?, C2 = ¿archivo_pedido está excluido?, C3 = ¿archivo_pedido ya estaba en rutas?, con todas las combinaciones y simplificando las que no importan (usa «—»). No escribas código todavía.
+
+Formato: una tabla por función con columnas: técnica | partición o límite | entrada | esperado | por qué. Después, la tabla de decisión. Al final, una lista de ambigüedades.
+
+Restricciones: el esperado sale de la regla, no de ejecutar código. Señala lo ambiguo. No inventes reglas que no estén escritas arriba; si un caso necesita una regla que no existe, ponlo como ambigüedad en vez de inventar el esperado.

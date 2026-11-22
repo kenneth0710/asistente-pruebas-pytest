@@ -1,0 +1,380 @@
+Actúa como desarrollador que escribe pruebas con pytest.
+
+Contexto: para comprobar si las pruebas encuentran errores rompí el código a propósito, un cambio a la vez. Uno de los cambios no lo detectó ninguna prueba: en _normalizar_para_comparar cambié la condición de la letra de unidad «if len(componente) == 2 and componente[1] == ":":» por «if componente[1:2] == ":":». Con ese error, un archivo de una sola letra con flujo de NTFS, como "a:$DATA", se trata como si fuera una unidad: no se corta desde el ":" y, si la lista de exclusión tiene "a", el archivo se envía a la IA. Según la REGLA 2e, solo una letra de unidad de dos caracteres como "C:" se salva del corte, así que "a:$DATA" debe quedar como "a".
+
+Faltan estos dos casos en la tabla:
+- N38 | Partición (nueva) | Nombre de una letra con flujo NTFS no es una unidad | "a:$DATA" | "a"
+- E37 | Partición (nueva) | Archivo de una letra con flujo NTFS sigue excluido | "a:$DATA", ["a"] | True
+
+Este es el archivo actual tests/test_s7_normalizar_para_comparar.py:
+
+
+import pytest
+
+from asistente.exclusion import _normalizar_para_comparar
+
+
+@pytest.mark.criterio("HU-07-E1")
+@pytest.mark.parametrize(
+    "ruta, esperado",
+    [
+        # N01: Límite - cadena vacía.
+        pytest.param(
+            "", "",
+            id="N01",
+        ),
+
+        # N03: Partición - ruta ya normalizada.
+        pytest.param(
+            "datos/pedidos.db", "datos/pedidos.db",
+            id="N03",
+        ),
+
+        # N04: Partición - separadores de Windows.
+        pytest.param(
+            "datos\\pedidos.db", "datos/pedidos.db",
+            id="N04",
+        ),
+
+        # N06: Límite - barra doble.
+        pytest.param(
+            "datos//pedidos.db", "datos/pedidos.db",
+            id="N06",
+        ),
+
+        # N08: Límite - barra al final.
+        pytest.param(
+            "datos/", "datos",
+            id="N08",
+        ),
+
+        # N09: Límite - ruta absoluta.
+        pytest.param(
+            "/datos/pedidos.db", "/datos/pedidos.db",
+            id="N09",
+        ),
+
+        # N10: Límite - únicamente la raíz.
+        pytest.param(
+            "/", "/",
+            id="N10",
+        ),
+
+        # N12: Partición - componente "." al inicio.
+        pytest.param(
+            "./.env", ".env",
+            id="N12",
+        ),
+
+        # N13: Partición - componente "." intermedio.
+        pytest.param(
+            "datos/./pedidos.db", "datos/pedidos.db",
+            id="N13",
+        ),
+
+        # N15: Límite - únicamente el componente ".".
+        pytest.param(
+            ".", "",
+            id="N15",
+        ),
+
+        # N16: Partición - ".." elimina el componente anterior.
+        pytest.param(
+            "x/../.env", ".env",
+            id="N16",
+        ),
+
+        # N17: Partición - varios componentes "..".
+        pytest.param(
+            "a/b/../../.env", ".env",
+            id="N17",
+        ),
+
+        # N18: Partición - ".." sin anterior en ruta relativa.
+        pytest.param(
+            "../datos/pedidos.db", "../datos/pedidos.db",
+            id="N18",
+        ),
+
+        # N19: Partición - ".." sin anterior en ruta absoluta.
+        pytest.param(
+            "/../.env", "/.env",
+            id="N19",
+        ),
+
+        # N20: Límite - ".." deja la ruta vacía.
+        pytest.param(
+            "a/..", "",
+            id="N20",
+        ),
+
+        # N21: Límite - ".." regresa a la raíz.
+        pytest.param(
+            "/a/..", "/",
+            id="N21",
+        ),
+
+        # N22: Límite - espacio al final.
+        pytest.param(
+            ".env ", ".env",
+            id="N22",
+        ),
+
+        # N24: Límite - punto al final.
+        pytest.param(
+            ".env.", ".env",
+            id="N24",
+        ),
+
+        # N26: Partición - puntos y espacios finales combinados.
+        pytest.param(
+            ".env. . ", ".env",
+            id="N26",
+        ),
+
+        # N27: Partición - limpieza de un componente intermedio.
+        pytest.param(
+            "datos. /pedidos.db", "datos/pedidos.db",
+            id="N27",
+        ),
+
+        # N28: Partición - conserva el espacio al inicio.
+        pytest.param(
+            " .env", " .env",
+            id="N28",
+        ),
+
+        # N29: Partición - conserva los puntos internos.
+        pytest.param(
+            "archivo.test.py", "archivo.test.py",
+            id="N29",
+        ),
+
+        # N30: Partición - elimina el flujo alternativo NTFS.
+        pytest.param(
+            ".env::$DATA", ".env",
+            id="N30",
+        ),
+
+        # N31: Partición - dos puntos en un componente intermedio.
+        pytest.param(
+            "datos:flujo/pedidos.db", "datos/pedidos.db",
+            id="N31",
+        ),
+
+        # N32: Límite - letra de unidad sola.
+        pytest.param(
+            "C:", "c:",
+            id="N32",
+        ),
+
+        # N33: Partición - ruta con unidad de Windows.
+        pytest.param(
+            "C:\\Datos\\PEDIDOS.DB", "c:/datos/pedidos.db",
+            id="N33",
+        ),
+
+        # N34: Partición - convierte las mayúsculas a minúsculas.
+        pytest.param(
+            "DATOS/CLIENTES_PANADERIA.CSV",
+            "datos/clientes_panaderia.csv",
+            id="N34",
+        ),
+
+        # N36: Partición - combinación de varias reglas.
+        pytest.param(
+            "/DATOS//./x/../.ENV. ", "/datos/.env",
+            id="N36",
+        ),
+    ],
+)
+def test_normalizar_ruta_para_comparar(ruta, esperado):
+    resultado = _normalizar_para_comparar(ruta)
+
+    assert resultado == esperado
+
+
+Y este es tests/test_s7_esta_excluido.py:
+
+
+import pytest
+
+from asistente.exclusion import _esta_excluido
+
+
+@pytest.mark.criterio("HU-07-E1")
+@pytest.mark.parametrize(
+    "ruta, patrones_normalizados, esperado",
+    [
+        # E01: Límite - lista de patrones vacía.
+        pytest.param(
+            ".env", [], False,
+            id="E01",
+        ),
+
+        # E03: Límite - un patrón que coincide.
+        pytest.param(
+            ".env", [".env"], True,
+            id="E03",
+        ),
+
+        # E04: Límite - un patrón que no coincide.
+        pytest.param(
+            "main.py", [".env"], False,
+            id="E04",
+        ),
+
+        # E05: Partición - coincidencia con la ruta completa.
+        pytest.param(
+            "datos/pedidos.db", ["datos/pedidos.db"], True,
+            id="E05",
+        ),
+
+        # E06: Partición - coincidencia con un final de la ruta.
+        pytest.param(
+            "c:/repo/datos/clientes_panaderia.csv",
+            ["datos/clientes_panaderia.csv"],
+            True,
+            id="E06",
+        ),
+
+        # E07: Partición - coincidencia con el nombre del archivo.
+        pytest.param(
+            "src/config/.env", [".env"], True,
+            id="E07",
+        ),
+
+        # E08: Partición - componente parecido no coincide.
+        pytest.param(
+            "misdatos/pedidos.db", ["datos/pedidos.db"], False,
+            id="E08",
+        ),
+
+        # E09: Partición - nombre parecido no coincide.
+        pytest.param(
+            "archivo.env", [".env"], False,
+            id="E09",
+        ),
+
+        # E10: Partición - patrón al comienzo, no al final.
+        pytest.param(
+            "datos/pedidos.db/copia.py",
+            ["datos/pedidos.db"],
+            False,
+            id="E10",
+        ),
+
+        # E11: Partición - comodín glob que coincide.
+        pytest.param(
+            "datos/pedidos.db", ["*.db"], True,
+            id="E11",
+        ),
+
+        # E12: Partición - comodín glob que no coincide.
+        pytest.param(
+            "datos/pedidos.csv", ["*.db"], False,
+            id="E12",
+        ),
+
+        # E17: Partición - varios patrones sin coincidencias.
+        pytest.param(
+            "main.py", [".env", "*.db", "*.csv"], False,
+            id="E17",
+        ),
+
+        # E20: Partición - coincide el último patrón.
+        pytest.param(
+            "clientes_panaderia.csv",
+            [".env", "*.db", "*.csv"],
+            True,
+            id="E20",
+        ),
+
+        # E23: Partición - ruta escrita en mayúsculas.
+        pytest.param(
+            "DATOS/PEDIDOS.DB", ["datos/pedidos.db"], True,
+            id="E23",
+        ),
+
+        # E24: Partición - separadores de Windows.
+        pytest.param(
+            "datos\\pedidos.db", ["datos/pedidos.db"], True,
+            id="E24",
+        ),
+
+        # E25: Partición - componentes "." y barras dobles.
+        pytest.param(
+            "./datos//./pedidos.db", ["datos/pedidos.db"], True,
+            id="E25",
+        ),
+
+        # E36: Partición de abuso - ".." dentro de la carpeta.
+        pytest.param(
+            "datos/x/../pedidos.db", ["datos/pedidos.db"], True,
+            id="E36",
+        ),
+
+        # E27: Partición - ".." sobre la raíz absoluta.
+        pytest.param(
+            "/../.env", [".env"], True,
+            id="E27",
+        ),
+
+        # E28: Límite - espacio al final.
+        pytest.param(
+            ".env ", [".env"], True,
+            id="E28",
+        ),
+
+        # E29: Límite - punto al final.
+        pytest.param(
+            ".env.", [".env"], True,
+            id="E29",
+        ),
+
+        # E30: Partición - flujo alternativo NTFS.
+        pytest.param(
+            ".env::$DATA", [".env"], True,
+            id="E30",
+        ),
+
+        # E31: Partición - sufijo con dos puntos y número.
+        pytest.param(
+            "datos/clientes_panaderia.csv:1",
+            ["clientes_panaderia.csv"],
+            True,
+            id="E31",
+        ),
+
+        # E32: Límite - barra al final.
+        pytest.param(
+            "datos/pedidos.db/", ["pedidos.db"], True,
+            id="E32",
+        ),
+
+        # E33: Partición - ruta y patrón absolutos.
+        pytest.param(
+            "/datos/pedidos.db", ["/datos/pedidos.db"], True,
+            id="E33",
+        ),
+
+        # E34: Partición - ruta relativa y patrón absoluto.
+        pytest.param(
+            "datos/pedidos.db", ["/datos/pedidos.db"], False,
+            id="E34",
+        ),
+    ],
+)
+def test_determinar_si_ruta_esta_excluida(
+    ruta, patrones_normalizados, esperado
+):
+    resultado = _esta_excluido(ruta, patrones_normalizados)
+
+    assert resultado is esperado
+
+
+Tarea: agrega N38 al final del parametrize de tests/test_s7_normalizar_para_comparar.py y E37 al final del parametrize de tests/test_s7_esta_excluido.py, cada uno con su comentario.
+
+Formato: dos bloques de código, cada uno con uno de los dos archivos completos.
+
+Restricciones: no cambies ninguna fila existente; esperados fijos según la regla; no modifiques el código de asistente/exclusion.py.

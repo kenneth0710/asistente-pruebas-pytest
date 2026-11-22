@@ -1,0 +1,135 @@
+Actúa como desarrollador que escribe pruebas con pytest.
+
+Contexto: las mismas tres reglas de arriba (te las repito) y la tabla de casos que revisé a partir de tu propuesta. Quité casos redundantes (por ejemplo S01, N23, N25, E19, E21 y E22), quité E13 a E16 porque prueban la librería fnmatch y no nuestra regla, cambié S16 y E26 porque eran débiles (el ".." se compensaba con el nombre del archivo) y agregué S29, S30 y E36. Las funciones se importan así: from asistente.exclusion import ArchivoExcluidoError, seleccionar_archivos, _normalizar_para_comparar, _esta_excluido.
+
+Reglas:
+REGLA 1. seleccionar_archivos(rutas, patrones, archivo_pedido=None) -> list[str]  (HU-07 E1 y E2, contrato de la semana 5)
+- Devuelve una lista nueva con las rutas que NO están excluidas, en el mismo orden en que llegaron, escritas con "/" en lugar de "\". Las rutas repetidas se conservan.
+- Si archivo_pedido es None, solo filtra.
+- Si archivo_pedido está excluido, lanza ArchivoExcluidoError con la ruta en el mensaje y no devuelve nada.
+- Si archivo_pedido está permitido y no estaba en rutas (comparando después de cambiar "\" por "/"), se agrega al final.
+- Si archivo_pedido está permitido y ya estaba en rutas, no se repite.
+- Una ruta está excluida según la REGLA 3.
+
+REGLA 2. _normalizar_para_comparar(ruta) -> str  (RNF-04 y correcciones H-01 y H-02 de la semana 6)
+Convierte una ruta en una forma única que solo se usa para comparar con los patrones:
+a) "\" se cambia por "/".
+b) Se quitan los componentes vacíos (barras dobles "//") y los componentes ".".
+c) ".." elimina el componente anterior. Si no hay componente anterior: en una ruta relativa el ".." se conserva; en una ruta absoluta (que empieza por "/") se descarta.
+d) A cada componente se le quitan los espacios y los puntos del final (Windows abre ".env " y ".env." como ".env").
+e) Si un componente tiene ":" se corta desde el ":" (flujo de NTFS, ".env::$DATA" es ".env"), excepto una letra de unidad de dos caracteres como "C:".
+f) El resultado queda en minúsculas.
+g) Si la ruta es absoluta, conserva el "/" inicial.
+
+REGLA 3. _esta_excluido(ruta, patrones_normalizados) -> bool  (HU-07, RNF-06)
+- patrones_normalizados son patrones glob ya normalizados con la REGLA 2 (en minúsculas).
+- La ruta se normaliza con la REGLA 2 y queda excluida (True) si algún patrón coincide con: la ruta completa, o cualquier final de la ruta formado por componentes completos (así "datos/clientes_panaderia.csv" excluye "c:/repo/datos/clientes_panaderia.csv"), o el nombre del archivo.
+- Si ningún patrón coincide, o la lista de patrones está vacía, devuelve False.
+- Ante la duda se excluye: RNF-06 exige 0 archivos excluidos enviados a la IA.
+
+Tabla de casos revisada:
+Notación: las entradas y esperados son literales de Python. R = rutas, P = patrones, A = archivo_pedido.
+
+### seleccionar_archivos (REGLA 1)
+
+| Id | Técnica | Partición o límite | Entrada | Esperado |
+|---|---|---|---|---|
+| S02 | Límite | Lista de rutas vacía | R=[], P=[".env"] | [] |
+| S03 | Límite | Una ruta permitida | R=["main.py"], P=[".env"] | ["main.py"] |
+| S04 | Límite | Una ruta excluida | R=[".env"], P=[".env"] | [] |
+| S05 | Partición | Varias permitidas: conserva el orden | R=["b.py", "a.py", "c.py"], P=[".env"] | ["b.py", "a.py", "c.py"] |
+| S07 | Partición | Permitidas y excluidas mezcladas | R=["main.py", ".env", "test.py", "pedidos.db"], P=[".env", "pedidos.db"] | ["main.py", "test.py"] |
+| S08 | Límite | Lista de patrones vacía | R=["main.py", ".env"], P=[] | ["main.py", ".env"] |
+| S09 | Partición | Permitidas repetidas se conservan | R=["a.py", "a.py"], P=[".env"] | ["a.py", "a.py"] |
+| S10 | Partición | Excluidas repetidas se quitan todas | R=[".env", ".env"], P=[".env"] | [] |
+| S12 | Partición | Separadores de Windows en la salida | R=["src\\main.py"], P=[] | ["src/main.py"] |
+| S13 | Partición | Ruta excluida en mayúsculas | R=[".ENV"], P=[".env"] | [] |
+| S14 | Partición | La salida conserva las mayúsculas | R=["Main.PY"], P=[".env"] | ["Main.PY"] |
+| S15 | Partición | La salida solo cambia "\" por "/" | R=["./src//main.py"], P=[".env"] | ["./src//main.py"] |
+| S29 | Partición (abuso, nueva) | ".." con patrón de carpeta no debe evadir | R=["datos/x/../clientes_panaderia.csv", "main.py"], P=["datos/clientes_panaderia.csv"] | ["main.py"] |
+| S30 | Partición (nueva) | Patrón en mayúsculas | R=[".env", "main.py"], P=[".ENV"] | ["main.py"] |
+| S17 | Decisión R1 | Sin archivo pedido | R=["a.py", ".env"], P=[".env"], A=None | ["a.py"] |
+| S18 | Decisión R2 | Pedido excluido y presente | R=["a.py", ".env"], P=[".env"], A=".env" | ArchivoExcluidoError, ".env" en el mensaje |
+| S19 | Decisión R2 | Pedido excluido y ausente | R=["a.py"], P=["pedidos.db"], A="pedidos.db" | ArchivoExcluidoError, "pedidos.db" en el mensaje |
+| S27 | Decisión R2 | Pedido excluido por flujo NTFS | R=["a.py"], P=[".env"], A=".env::$DATA" | ArchivoExcluidoError, ".env::$DATA" en el mensaje |
+| S21 | Decisión R3 | Pedido permitido y presente: no se repite | R=["a.py", "b.py"], P=[], A="a.py" | ["a.py", "b.py"] |
+| S23 | Decisión R3 | Presente con otro separador | R=["src\\a.py"], P=[], A="src/a.py" | ["src/a.py"] |
+| S20 | Decisión R4 | Pedido permitido y ausente: al final | R=["a.py", "b.py"], P=[".env"], A="c.py" | ["a.py", "b.py", "c.py"] |
+| S22 | Decisión R4 / límite | Pedido con rutas vacías | R=[], P=[".env"], A="a.py" | ["a.py"] |
+| S26 | Decisión R4 | Pedido nuevo con "\" | R=["a.py"], P=[], A="src\\b.py" | ["a.py", "src/b.py"] |
+| S28 | Partición | Devuelve una lista nueva | R=["a.py"], P=[] | resultado == ["a.py"] y resultado is not R |
+
+Tabla de decisión simplificada (C1 ¿hay archivo_pedido?, C2 ¿está excluido?, C3 ¿ya estaba en rutas?):
+- R1: C1 No, C2 —, C3 — → solo filtra (S17).
+- R2: C1 Sí, C2 Sí, C3 — → ArchivoExcluidoError (S18, S19, S27).
+- R3: C1 Sí, C2 No, C3 Sí → filtra sin repetir el pedido (S21, S23).
+- R4: C1 Sí, C2 No, C3 No → filtra y agrega el pedido al final (S20, S22, S26).
+
+### _normalizar_para_comparar (REGLA 2)
+
+| Id | Técnica | Partición o límite | Entrada | Esperado |
+|---|---|---|---|---|
+| N01 | Límite | Cadena vacía | "" | "" |
+| N03 | Partición | Ya normalizada | "datos/pedidos.db" | "datos/pedidos.db" |
+| N04 | Partición | Separadores de Windows | "datos\\pedidos.db" | "datos/pedidos.db" |
+| N06 | Límite | Barra doble | "datos//pedidos.db" | "datos/pedidos.db" |
+| N08 | Límite | Barra al final | "datos/" | "datos" |
+| N09 | Límite | Ruta absoluta | "/datos/pedidos.db" | "/datos/pedidos.db" |
+| N10 | Límite | Solo la raíz | "/" | "/" |
+| N12 | Partición | "." al inicio | "./.env" | ".env" |
+| N13 | Partición | "." intermedio | "datos/./pedidos.db" | "datos/pedidos.db" |
+| N15 | Límite | Solo "." | "." | "" |
+| N16 | Partición | ".." con anterior | "x/../.env" | ".env" |
+| N17 | Partición | Varios ".." | "a/b/../../.env" | ".env" |
+| N18 | Partición | ".." sin anterior, relativa | "../datos/pedidos.db" | "../datos/pedidos.db" |
+| N19 | Partición | ".." sin anterior, absoluta | "/../.env" | "/.env" |
+| N20 | Límite | ".." deja la ruta vacía | "a/.." | "" |
+| N21 | Límite | ".." vuelve a la raíz | "/a/.." | "/" |
+| N22 | Límite | Espacio final | ".env " | ".env" |
+| N24 | Límite | Punto final | ".env." | ".env" |
+| N26 | Partición | Puntos y espacios finales combinados | ".env. . " | ".env" |
+| N27 | Partición | Limpieza en un componente intermedio | "datos. /pedidos.db" | "datos/pedidos.db" |
+| N28 | Partición | Espacio al inicio no se quita | " .env" | " .env" |
+| N29 | Partición | Puntos internos se conservan | "archivo.test.py" | "archivo.test.py" |
+| N30 | Partición | Flujo NTFS | ".env::$DATA" | ".env" |
+| N31 | Partición | ":" en componente intermedio | "datos:flujo/pedidos.db" | "datos/pedidos.db" |
+| N32 | Límite | Letra de unidad sola | "C:" | "c:" |
+| N33 | Partición | Ruta con unidad de Windows | "C:\\Datos\\PEDIDOS.DB" | "c:/datos/pedidos.db" |
+| N34 | Partición | Mayúsculas | "DATOS/CLIENTES_PANADERIA.CSV" | "datos/clientes_panaderia.csv" |
+| N36 | Partición | Varias reglas juntas | "/DATOS//./x/../.ENV. " | "/datos/.env" |
+
+### _esta_excluido (REGLA 3); los patrones ya vienen normalizados
+
+| Id | Técnica | Partición o límite | Entrada (ruta, patrones) | Esperado |
+|---|---|---|---|---|
+| E01 | Límite | Sin patrones | ".env", [] | False |
+| E03 | Límite | Un patrón que coincide | ".env", [".env"] | True |
+| E04 | Límite | Un patrón que no coincide | "main.py", [".env"] | False |
+| E05 | Partición | Coincide la ruta completa | "datos/pedidos.db", ["datos/pedidos.db"] | True |
+| E06 | Partición | Coincide un final de la ruta | "c:/repo/datos/clientes_panaderia.csv", ["datos/clientes_panaderia.csv"] | True |
+| E07 | Partición | Coincide el nombre | "src/config/.env", [".env"] | True |
+| E08 | Partición | Componente parecido no coincide | "misdatos/pedidos.db", ["datos/pedidos.db"] | False |
+| E09 | Partición | Nombre parecido no coincide | "archivo.env", [".env"] | False |
+| E10 | Partición | Patrón al comienzo, no al final | "datos/pedidos.db/copia.py", ["datos/pedidos.db"] | False |
+| E11 | Partición | Comodín que coincide | "datos/pedidos.db", ["*.db"] | True |
+| E12 | Partición | Comodín que no coincide | "datos/pedidos.csv", ["*.db"] | False |
+| E17 | Partición | Varios patrones, ninguno coincide | "main.py", [".env", "*.db", "*.csv"] | False |
+| E20 | Partición | Varios patrones, coincide el último | "clientes_panaderia.csv", [".env", "*.db", "*.csv"] | True |
+| E23 | Partición | Ruta en mayúsculas | "DATOS/PEDIDOS.DB", ["datos/pedidos.db"] | True |
+| E24 | Partición | Separadores de Windows | "datos\\pedidos.db", ["datos/pedidos.db"] | True |
+| E25 | Partición | "." y barras dobles | "./datos//./pedidos.db", ["datos/pedidos.db"] | True |
+| E36 | Partición (abuso, nueva) | ".." dentro de la carpeta del patrón | "datos/x/../pedidos.db", ["datos/pedidos.db"] | True |
+| E27 | Partición | ".." sobre la raíz | "/../.env", [".env"] | True |
+| E28 | Límite | Espacio final | ".env ", [".env"] | True |
+| E29 | Límite | Punto final | ".env.", [".env"] | True |
+| E30 | Partición | Flujo NTFS | ".env::$DATA", [".env"] | True |
+| E31 | Partición | ":" con número | "datos/clientes_panaderia.csv:1", ["clientes_panaderia.csv"] | True |
+| E32 | Límite | Barra final | "datos/pedidos.db/", ["pedidos.db"] | True |
+| E33 | Partición | Ruta y patrón absolutos | "/datos/pedidos.db", ["/datos/pedidos.db"] | True |
+| E34 | Partición | Ruta relativa, patrón absoluto | "datos/pedidos.db", ["/datos/pedidos.db"] | False |
+
+Tarea: escribe las pruebas: una fila de @pytest.mark.parametrize por cada caso de la tabla (con pytest.param(..., id="S02") usando el Id de la tabla) y pruebas con pytest.raises(ArchivoExcluidoError, match=...) para los casos de error.
+
+Formato: tres archivos completos, cada uno en su propio bloque de código: tests/test_s7_seleccionar_archivos.py, tests/test_s7_normalizar_para_comparar.py y tests/test_s7_esta_excluido.py. Cada fila de parametrize lleva un comentario que diga qué partición, límite o regla de decisión cubre. Cada prueba lleva la marca @pytest.mark.criterio("HU-07-E1") o @pytest.mark.criterio("HU-07-E2") y un nombre en español que empiece por test_.
+
+Restricciones: no modifiques las funciones. Los esperados son fijos y salen de la tabla y de la regla, no calculados ni obtenidos de ejecutar el código. Usa asserts de valor exacto (==, is True, is False); no uses asserts débiles como "is not None". Aquí no hay decimales, así que no hace falta pytest.approx. Solo pytest y la librería estándar.

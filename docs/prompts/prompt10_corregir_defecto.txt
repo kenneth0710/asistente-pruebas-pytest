@@ -1,0 +1,64 @@
+Actúa como desarrollador Python que corrige un defecto sin tocar las pruebas.
+
+Contexto: guardé tus tres archivos de pruebas sin cambios. Al correr pytest -v pasan 93 y fallan 8, y todas las fallas tienen que ver con "..". Revisé la REGLA 2c antes de tocar nada: «".." elimina el componente anterior. Si no hay componente anterior: en una ruta relativa el ".." se conserva; en una ruta absoluta se descarta». La regla está bien escrita, así que el defecto está en el código, no en las pruebas. Este es el resumen de las fallas (esperado según la regla → obtenido):
+
+E   assert False is True
+C:\Users\kenne\asistente-pruebas-pytest\tests\test_s7_esta_excluido.py:175: assert False is True
+E   AssertionError: assert 'x/.env' == '.env'
+C:\Users\kenne\asistente-pruebas-pytest\tests\test_s7_normalizar_para_comparar.py:184: AssertionError: assert 'x/.env' == '.env'
+E   AssertionError: assert 'a/b/.env' == '.env'
+C:\Users\kenne\asistente-pruebas-pytest\tests\test_s7_normalizar_para_comparar.py:184: AssertionError: assert 'a/b/.env' == '.env'
+E   AssertionError: assert 'datos/pedidos.db' == '../datos/pedidos.db'
+C:\Users\kenne\asistente-pruebas-pytest\tests\test_s7_normalizar_para_comparar.py:184: AssertionError: assert 'datos/pedidos.db' == '../datos/pedidos.db'
+E   AssertionError: assert 'a' == ''
+C:\Users\kenne\asistente-pruebas-pytest\tests\test_s7_normalizar_para_comparar.py:184: AssertionError: assert 'a' == ''
+E   AssertionError: assert '/a' == '/'
+C:\Users\kenne\asistente-pruebas-pytest\tests\test_s7_normalizar_para_comparar.py:184: AssertionError: assert '/a' == '/'
+E   AssertionError: assert '/datos/x/.env' == '/datos/.env'
+C:\Users\kenne\asistente-pruebas-pytest\tests\test_s7_normalizar_para_comparar.py:184: AssertionError: assert '/datos/x/.env' == '/datos/.env'
+E   AssertionError: assert ['datos/x/../...v', 'main.py'] == ['main.py']
+C:\Users\kenne\asistente-pruebas-pytest\tests\test_s7_seleccionar_archivos.py:110: AssertionError: assert ['datos/x/../...v', 'main.py'] == ['main.py']
+
+Esta es la función actual (asistente/exclusion.py):
+
+def _normalizar_para_comparar(ruta: str) -> str:
+    """Normaliza una ruta para comparar sus equivalencias con los patrones.
+
+    Args:
+        ruta (str): Ruta que se desea normalizar para la comparación.
+
+    Returns:
+        str: Ruta con separadores normalizados, componentes vacíos y puntos
+            simples eliminados, componentes especiales procesados y en
+            minúsculas.
+    """
+    ruta = _normalizar_ruta(ruta)
+    componentes = []
+
+    for componente in ruta.split("/"):
+        if len(componente) == 2 and componente[1] == ":":
+            componente = componente.lower()
+        elif ":" in componente:
+            componente = componente.split(":", 1)[0]
+
+        componente = componente.rstrip(" .")
+        if componente in ("", "."):
+            continue
+        if componente == "..":
+            if componentes and componentes[-1] != "..":
+                componentes.pop()
+            elif not ruta.startswith("/"):
+                componentes.append(componente)
+            continue
+        componentes.append(componente)
+
+    prefijo = "/" if ruta.startswith("/") else ""
+    return (prefijo + "/".join(componentes)).lower()
+
+
+
+Tarea: explica en una o dos frases por qué falla con "..", y corrige solo la función _normalizar_para_comparar para que cumpla la REGLA 2 completa (a hasta g) y pasen las 101 pruebas.
+
+Formato: primero la explicación; después, un solo bloque de código con la función _normalizar_para_comparar completa, incluido su docstring.
+
+Restricciones: no modifiques ninguna prueba ni ninguna otra función; no cambies la firma; solo la librería estándar; ninguna línea de más de 88 caracteres.

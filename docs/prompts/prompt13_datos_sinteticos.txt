@@ -1,0 +1,19 @@
+Actúa como desarrollador que prepara datos de prueba sintéticos para pytest.
+
+Contexto: el asistente es para una panadería de barrio de Neiva (Huila, Colombia). Antes de enviar archivos a la IA, seleccionar_archivos(rutas, patrones) quita los que coinciden con la lista de exclusión (.asistenteignore), según las reglas que ya te pasé. Necesito probarlo con un repositorio de ejemplo, pero sin datos de personas reales (Ley 1581 de 2012).
+
+Tarea:
+1. Escribe un fixture de pytest llamado repo_panaderia(tmp_path) que cree en tmp_path un repositorio ficticio y devuelva la lista de rutas relativas de todos sus archivos, con "/" y ordenada alfabéticamente. Debe incluir:
+   - .asistenteignore con estas líneas: .env, clientes_panaderia.csv, pedidos.db y *.bak
+   - .env con una clave claramente falsa (por ejemplo GEMINI_API_KEY=clave-falsa-solo-para-pruebas)
+   - datos/clientes_panaderia.csv con 6 a 8 clientes sintéticos: columnas id, nombre, barrio, telefono, saldo_fiado. Nombres inventados con tildes, ñ y apóstrofo, un nombre vacío, barrios reales de Neiva, teléfonos con el patrón 300 000 xxxx y al menos un saldo en cero.
+   - datos/pedidos.db (puede quedar vacío) y datos/respaldo_pedidos.bak
+   - 4 o 5 archivos de código de la app con nombres difíciles pero válidos en Windows, macOS y Ubuntu: tildes, ñ, apóstrofo, espacios internos y mayúsculas (por ejemplo app/pedidos/validación_año.py o «app/Pedidos de Doña Ana's.py»; no uses espacios ni puntos al final del nombre, porque Windows no los permite).
+2. Escribe pruebas que usen el fixture:
+   - una que lea los patrones de .asistenteignore y compruebe que seleccionar_archivos devuelve exactamente la lista de archivos permitidos, escrita como lista fija en la prueba (no calculada);
+   - una que compruebe que ninguna ruta devuelta termina en .env, clientes_panaderia.csv, pedidos.db ni .bak;
+   - una que compruebe que el CSV sintético tiene al menos un nombre vacío, al menos una ñ, al menos un apóstrofo, al menos un saldo 0 y que todos los teléfonos empiezan por "300 000".
+
+Formato: un solo bloque de código con el archivo completo tests/test_s7_datos_sinteticos.py. Al final, una tabla con los casos difíciles incluidos y por qué cada uno es difícil.
+
+Restricciones: datos 100 % inventados, ninguna persona real (ni famosos); solo pytest y la librería estándar; esperados fijos; cada prueba con @pytest.mark.criterio("HU-07-E1") y nombre en español que empiece por test_; abre los archivos con encoding="utf-8"; no modifiques asistente/exclusion.py.

@@ -211,3 +211,101 @@ Commit revisado: `61a2af1`. El informe completo está en [`revision_seguridad.md
 - Las evasiones más graves no las vio: los nombres que Windows abre como el mismo `.env`. Las encontré al pensar en cómo se puede abrir el mismo archivo con otro nombre en los tres sistemas operativos del equipo.
 - Usar ChatGPT como agente en una rama, con una instrucción delimitada, funcionó bien. Revisar el diff fue lo que me dio confianza para integrarlo, no su «10 passed», porque ese resultado no incluía las pruebas que ya existían.
 - Para la próxima vez: escribir las pruebas de abuso desde el contrato, antes de pedir el código, y no esperar a la revisión de seguridad.
+
+---
+
+# Semana 7: suite de pruebas con técnicas formales y datos sintéticos
+
+Commit de partida: `7a2f207`. El registro completo está en [`registro_pruebas.md`](registro_pruebas.md).
+- **Prompts:** siguen las dos plantillas que el profesor pegó en el chat de la clase del 21/11 («Actúa como analista de pruebas de software…» y «Actúa como desarrollador que escribe pruebas con pytest…»).
+- **Asistente:** ChatGPT (versión web), en una conversación nueva el 21 de noviembre de 2026.
+
+### Entrada 12
+
+- **Fecha:** 2026-11-21
+- **Prompt o sugerencia:** Prompt 8 ([`prompt8_diseno_casos.txt`](docs/prompts/prompt8_diseno_casos.txt)). Le di las tres reglas escritas (el oráculo) y le pedí casos con particiones de equivalencia, valores límite y una tabla de decisión para `seleccionar_archivos`, sin código. ChatGPT propuso:
+  - 100 casos;
+  - una tabla de decisión de 8 combinaciones simplificada a 4 reglas;
+  - 20 ambigüedades.
+- **Decisión:** Aceptada con cambios
+- **Por qué:** La revisé con las 5 preguntas de la clase:
+  - Las particiones y los límites estaban completos.
+  - Los esperados salían de la regla.
+  - No inventó reglas, pero E13–E16 probaban la librería `fnmatch` y no la regla del proyecto.
+  - Descarté 18 casos redundantes (más de uno por partición) y N37, que no sale de ninguna regla.
+  - Cambié S16 y E26 porque eran débiles: el `..` quedaba cubierto por el nombre del archivo, así que no probaban que `..` funcionara. Los reemplacé por S29 y E36.
+  - Agregué S30 (patrón en mayúsculas).
+  - Llevé las ambigüedades al registro, cada una con su decisión.
+- **Verificación:** Comparé cada esperado con la regla escrita, no con el código. La tabla revisada quedó con 77 casos (sección 1 del registro).
+- **Commit relacionado:** `registro_pruebas.md` (sección 1)
+
+### Entrada 13
+
+- **Fecha:** 2026-11-21
+- **Prompt o sugerencia:** Prompt 9 ([`prompt9_generar_pruebas.txt`](docs/prompts/prompt9_generar_pruebas.txt)). Con la regla y la tabla revisada le pedí una fila de `parametrize` por caso, `pytest.raises` para los errores, un comentario por fila, esperados fijos y que no modificara las funciones. ChatGPT entregó 3 archivos con 77 pruebas.
+- **Decisión:** Aceptada
+- **Por qué:** Cada fila coincide con la tabla revisada. Los asserts son de valor exacto (`==`, `is True`, `is False`) y los errores se comprueban con `pytest.raises(ArchivoExcluidoError, match=re.escape(...))`. Al correrlas fallaron 8: N16, N17, N18, N20, N21, N36, E36 y S29. Revisé la regla 2c antes de tocar nada: era un **defecto real del código** (D-01), así que no cambié ninguna prueba.
+- **Verificación:** `pytest -v` dio 93 aprobadas y 8 fallidas; todas las fallas tenían que ver con `..`. Las guardé en rojo para dejar la evidencia.
+- **Commit relacionado:** `3361726` (pruebas en rojo)
+
+### Entrada 14
+
+- **Fecha:** 2026-11-21
+- **Prompt o sugerencia:** Prompt 10 ([`prompt10_corregir_defecto.txt`](docs/prompts/prompt10_corregir_defecto.txt)). Le pasé las 8 fallas (esperado según la regla contra lo obtenido) y la función, y le pedí corregir solo `_normalizar_para_comparar` sin tocar las pruebas. ChatGPT explicó que `rstrip(" .")` convertía `..` en vacío antes de revisarlo, y movió la revisión de `..` antes del `rstrip`.
+- **Decisión:** Aceptada
+- **Por qué:** La explicación coincide con lo que vi al leer el código: la línea `if componente == ".."` nunca se ejecutaba. La corrección es mínima y no cambia otras reglas. Este defecto venía de la corrección H-01 de la semana 6: sus pruebas usaban `x/../datos/…`, que se excluye igual por el final de la ruta, y por eso no lo detectaron.
+- **Verificación:** 101 pruebas aprobadas y `ruff check .` sin avisos. Además, `seleccionar_archivos(["datos/x/../clientes_panaderia.csv", "main.py"], ["datos/clientes_panaderia.csv"])` ahora devuelve `["main.py"]`. Queda un riesgo residual con `.. ` (espacio final), registrado como ambigüedad A6 y pendiente P-05.
+- **Commit relacionado:** `3238135`
+
+### Entrada 15
+
+- **Fecha:** 2026-11-21
+- **Prompt o sugerencia:** Las pruebas S02, S05, S20, S23 y S28 que generó ChatGPT.
+- **Decisión:** Rechazada (descartadas)
+- **Por qué:** A la pregunta «¿cubre algo que otra prueba no cubre?» la respuesta fue no: repetían exactamente pruebas de la semana 5. Se las pedí quitar a ChatGPT con el prompt 11 ([`prompt11_quitar_redundantes.txt`](docs/prompts/prompt11_quitar_redundantes.txt)), y en la tabla del registro esos casos apuntan a la prueba original.
+- **Verificación:** El `diff` muestra que solo se quitaron esas 5 filas. Quedaron 96 pruebas, todas en verde.
+- **Commit relacionado:** `6cc45e7`
+
+### Entrada 16
+
+- **Fecha:** 2026-11-21
+- **Prompt o sugerencia:** Prompt 12 ([`prompt12_casos_faltantes.txt`](docs/prompts/prompt12_casos_faltantes.txt)). Rompí el código 9 veces, de una en una. Las mutaciones M5, M6 y M7 no hicieron fallar ninguna prueba.
+  - M5 y M6 resultaron ser mutantes equivalentes: el código compara lo mismo dos veces, así que ninguna prueba puede detectarlas.
+  - M7 sí era un error real: reconocer la letra de unidad sin revisar la longitud deja pasar `a:$DATA`.
+
+  Le pedí a ChatGPT los casos N38 y E37.
+- **Decisión:** Aceptada
+- **Por qué:** El esperado sale de la regla 2e: solo una unidad de dos caracteres como `C:` se salva del corte. El `diff` mostró que solo agregó esas dos filas.
+- **Verificación:** Con M7 aplicada, N38 y E37 fallan. Sin M7, las 98 pruebas pasan. La tabla completa de mutaciones está en la sección 3 del registro.
+- **Commit relacionado:** `0d132c1`
+
+### Entrada 17
+
+- **Fecha:** 2026-11-21
+- **Prompt o sugerencia:** Prompt 13 ([`prompt13_datos_sinteticos.txt`](docs/prompts/prompt13_datos_sinteticos.txt)). Le pedí un fixture `repo_panaderia(tmp_path)` con un repositorio ficticio de una panadería de Neiva:
+  - un `.env` con clave falsa;
+  - un CSV de clientes inventados con tildes, ñ, apóstrofo, un nombre vacío, saldo 0 y teléfonos `300 000 xxxx`;
+  - nombres de archivo difíciles.
+
+  También le pedí 3 pruebas que lo usen. Después, con el prompt 14 ([`prompt14_prueba_debil.txt`](docs/prompts/prompt14_prueba_debil.txt)), le pedí quitar una prueba.
+- **Decisión:** Aceptada con cambios
+- **Por qué:** Los datos son 100 % inventados y tienen contexto local (barrios de Neiva). La prueba principal compara contra una lista fija de los 6 archivos permitidos. Pero `test_no_devolver_archivos_excluidos` era débil y redundante: si la función devolviera siempre `[]`, esa prueba seguía en verde. Por eso se la pedí quitar.
+- **Verificación:** Comprobé la debilidad con una mutación (`return []`): solo falló la prueba de la lista exacta. Después revisé a mano que ningún nombre ni teléfono corresponde a una persona real. Al final quedaron 100 pruebas en verde.
+- **Commit relacionado:** `60dd3a8` (datos) y `680a9da` (descarte)
+
+## Resumen de la semana 7
+
+| Decisión | Cantidad |
+|---|---|
+| Aceptadas | 3 (entradas 13, 14 y 16) |
+| Aceptadas con cambios | 2 (entradas 12 y 17) |
+| Rechazadas | 1 (entrada 15) |
+
+## Reflexión de la semana 7
+
+- Escribir la regla antes del código cambió el resultado. ChatGPT diseñó y escribió las pruebas solo a partir de la regla, y esas pruebas encontraron en minutos un defecto que llevaba una semana escondido: el `..` que la corrección de la semana 6 decía resolver nunca se resolvía.
+- Las pruebas de esa semana pasaban por una coincidencia: el caso que usaban se excluía por otra vía. Es justo la señal de «prueba débil» que se vio en clase.
+- Romper el código a propósito mostró dos cosas que la cobertura no muestra:
+  - una prueba que seguía en verde con una función inútil;
+  - dos mutantes imposibles de detectar, que delatan lógica duplicada para el próximo refactor.
+- La IA fue muy útil para proponer casos y escribir el código de las pruebas, pero propuso de más: 100 casos, muchos redundantes. Decidir cuáles sobraban y cuáles eran débiles fue trabajo mío.

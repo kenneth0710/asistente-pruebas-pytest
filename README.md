@@ -80,10 +80,20 @@ Para ejecutar las pruebas automatizadas:
 pytest
 ```
 
-Actualmente hay 24 pruebas distribuidas en los siguientes archivos:
+Para ver cada caso por su nombre (por ejemplo `test_filtrar_rutas[S29]`):
 
-- `tests/test_hu07_exclusion.py`
-- `tests/test_hu07_abuso.py`
+```
+pytest -v
+```
+
+Actualmente hay 100 pruebas distribuidas en los siguientes archivos:
+
+- `tests/test_hu07_exclusion.py`: pruebas de la HU-07 (semana 5).
+- `tests/test_hu07_abuso.py`: pruebas de abuso del filtro (semana 6).
+- `tests/test_s7_seleccionar_archivos.py`, `tests/test_s7_normalizar_para_comparar.py` y `tests/test_s7_esta_excluido.py`: casos diseñados con particiones de equivalencia, valores límite y tabla de decisión (semana 7).
+- `tests/test_s7_datos_sinteticos.py`: fixture `repo_panaderia` con datos sintéticos (semana 7).
+
+La tabla de casos, las pruebas de la IA descartadas o corregidas, los errores introducidos a propósito y el origen de los datos de prueba están en [`registro_pruebas.md`](registro_pruebas.md).
 
 Para ejecutar el análisis estático con Ruff:
 
@@ -107,7 +117,11 @@ asistente-pruebas-pytest/
 │   └── exclusion.py
 ├── tests/
 │   ├── test_hu07_exclusion.py
-│   └── test_hu07_abuso.py
+│   ├── test_hu07_abuso.py
+│   ├── test_s7_seleccionar_archivos.py
+│   ├── test_s7_normalizar_para_comparar.py
+│   ├── test_s7_esta_excluido.py
+│   └── test_s7_datos_sinteticos.py
 ├── docs/
 │   └── prompts/
 ├── .asistenteignore
@@ -116,6 +130,7 @@ asistente-pruebas-pytest/
 ├── requirements-dev.txt
 ├── bitacora_ia.md
 ├── revision_seguridad.md
+├── registro_pruebas.md
 ├── LICENSE
 └── README.md
 ```
@@ -131,14 +146,17 @@ Descripción de los elementos principales:
 - `requirements-dev.txt`: fija las versiones de las herramientas de desarrollo.
 - `bitacora_ia.md`: registra el uso de IA durante el desarrollo.
 - `revision_seguridad.md`: contiene el informe de revisión de seguridad.
+- `registro_pruebas.md`: tabla de casos, pruebas de la IA revisadas, errores introducidos a propósito y datos de prueba.
 - `LICENSE`: contiene los términos de la licencia MIT.
 
 ## Uso de IA
-La IA se utilizó como apoyo durante las semanas 5 y 6 del desarrollo.
+La IA se utilizó como apoyo durante las semanas 5, 6 y 7 del desarrollo.
 
 **Semana 5:** ChatGPT propuso las pruebas, la implementación y el refactor de la funcionalidad HU-07.
 
 **Semana 6:** ChatGPT realizó una segunda revisión de seguridad, trabajó como agente en la rama `agente/pruebas-abuso` para desarrollar pruebas de abuso y su corrección, y redactó los docstrings y este README.
+
+**Semana 7:** ChatGPT propuso los casos de prueba con particiones de equivalencia, valores límite y tabla de decisión, escribió las pruebas a partir de la tabla revisada, corrigió el defecto D-01 que esas pruebas encontraron y generó los datos sintéticos. Cada caso y cada prueba se revisaron contra la regla; el detalle está en `registro_pruebas.md`.
 
 Las sugerencias realizadas por la IA se verificaron mediante pruebas antes de integrarse. El detalle del proceso se encuentra en `bitacora_ia.md` y el informe de seguridad en `revision_seguridad.md`.
 

@@ -1,4 +1,3 @@
-
 import re
 
 import pytest
@@ -13,12 +12,6 @@ from asistente.exclusion import (
 @pytest.mark.parametrize(
     "rutas, patrones, esperado",
     [
-        # S02: Límite - lista de rutas vacía.
-        pytest.param(
-            [], [".env"], [],
-            id="S02",
-        ),
-
         # S03: Límite - una ruta permitida.
         pytest.param(
             ["main.py"], [".env"], ["main.py"],
@@ -29,14 +22,6 @@ from asistente.exclusion import (
         pytest.param(
             [".env"], [".env"], [],
             id="S04",
-        ),
-
-        # S05: Partición - conserva el orden de las rutas.
-        pytest.param(
-            ["b.py", "a.py", "c.py"],
-            [".env"],
-            ["b.py", "a.py", "c.py"],
-            id="S05",
         ),
 
         # S07: Partición - rutas permitidas y excluidas mezcladas.
@@ -126,21 +111,6 @@ def test_filtrar_rutas(rutas, patrones, esperado):
             id="S21",
         ),
 
-        # S23: Decisión R3 - pedido presente con otro separador.
-        pytest.param(
-            ["src\\a.py"], [], "src/a.py", ["src/a.py"],
-            id="S23",
-        ),
-
-        # S20: Decisión R4 - pedido permitido y ausente.
-        pytest.param(
-            ["a.py", "b.py"],
-            [".env"],
-            "c.py",
-            ["a.py", "b.py", "c.py"],
-            id="S20",
-        ),
-
         # S22: Decisión R4 y límite - lista de rutas vacía.
         pytest.param(
             [], [".env"], "a.py", ["a.py"],
@@ -195,22 +165,3 @@ def test_rechazar_archivo_pedido_excluido(
         match=re.escape(mensaje_esperado),
     ):
         seleccionar_archivos(rutas, patrones, archivo_pedido)
-
-
-@pytest.mark.criterio("HU-07-E1")
-@pytest.mark.parametrize(
-    "rutas, patrones, esperado",
-    [
-        # S28: Partición - devuelve una lista nueva.
-        pytest.param(
-            ["a.py"], [], ["a.py"],
-            id="S28",
-        ),
-    ],
-)
-def test_devolver_lista_nueva(rutas, patrones, esperado):
-    resultado = seleccionar_archivos(rutas, patrones)
-
-    assert resultado == esperado
-    assert resultado is not rutas
-

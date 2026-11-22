@@ -37,20 +37,26 @@ def _normalizar_para_comparar(ruta: str) -> str:
     componentes = []
 
     for componente in ruta.split("/"):
-        if len(componente) == 2 and componente[1] == ":":
-            componente = componente.lower()
-        elif ":" in componente:
-            componente = componente.split(":", 1)[0]
-
-        componente = componente.rstrip(" .")
         if componente in ("", "."):
             continue
+
         if componente == "..":
             if componentes and componentes[-1] != "..":
                 componentes.pop()
             elif not ruta.startswith("/"):
                 componentes.append(componente)
             continue
+
+        if len(componente) == 2 and componente[1] == ":":
+            componente = componente.lower()
+        elif ":" in componente:
+            componente = componente.split(":", 1)[0]
+
+        componente = componente.rstrip(" .")
+
+        if componente in ("", "."):
+            continue
+
         componentes.append(componente)
 
     prefijo = "/" if ruta.startswith("/") else ""

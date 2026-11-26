@@ -6,6 +6,13 @@ Funcionalidad: HU-07 Lista de exclusión de archivos (`seleccionar_archivos`)
 Asistente usado:
 - Semana 5: ChatGPT (OpenAI), versión web, modo chat, en una sola conversación el 7 de noviembre de 2026. Le di como contexto el contrato y las pruebas. El código lo pegué y lo ejecuté en VS Code con pytest.
 - Semana 6: ChatGPT, versión web, en un chat nuevo el 14 de noviembre de 2026. Lo usé en modo chat para la revisión, las docstrings y el README, y como agente delimitado en la rama `agente/pruebas-abuso`. Sus entradas empiezan en la sección «Semana 6».
+- Semana 7: ChatGPT, versión web, en un chat nuevo el 21 de noviembre de 2026 (entradas 12 a 17).
+- Cierre del proyecto (módulo 6, cobertura, aceptación, plan de operación y README): ChatGPT, versión web, en un chat nuevo el 26 de noviembre de 2026 (entradas 18 a 24).
+
+**Uso de IA de los módulos 1 a 3.** Está registrado dentro de cada documento, en [`docs/modulos/`](docs/modulos/):
+- **Semana 2:** el [banco de 10 prompts](docs/modulos/modulo1_banco_de_prompts.pdf), hecho con Claude, con la evaluación de cada respuesta. La [propuesta](docs/modulos/modulo1_propuesta.pdf) declara que usé Claude para la redacción.
+- **Semana 3:** la [bitácora de prompts del documento de requisitos](docs/modulos/modulo2_requisitos_y_bitacora.pdf), hecha con Gemini. Ahí detecté 11 requisitos inventados, 3 ambigüedades, 2 contradicciones y 2 omisiones.
+- **Semana 4:** los prompts y la verificación del [documento de diseño](docs/modulos/modulo3_diseno.pdf), hechos con Gemini.
 
 Los prompts exactos están en [`docs/prompts/`](docs/prompts/): uno para las pruebas, otro para la implementación y otro para el refactor. Siguen la estructura del curso (rol, contexto, tarea, formato y restricciones) y el prompt del OVA «Contrato y pruebas primero».
 
@@ -425,3 +432,50 @@ Commit de partida: `7a2f207`. El registro completo está en [`registro_pruebas.m
   - ChatGPT actualizó solo la sección 2.1 y la fila de RNF-02, y apliqué esos dos fragmentos sin cambios.
   - Revisé que los ejemplos de registros no tengan datos personales.
 - **Commit relacionado:** `d177c2f`
+
+### Entrada 24
+
+- **Fecha:** 2026-11-26
+- **Prompt o sugerencia:** Prompt 24 ([`prompt24_readme_final.txt`](docs/prompts/prompt24_readme_final.txt)). Le pasé solo los cambios reales desde la semana 6 y le pedí reemplazar las secciones desactualizadas del README (Requisitos, Pruebas, una nueva de integración continua y Docker, Estructura y Uso de IA). Después le pedí cinco correcciones con el prompt 25 ([`prompt25_readme_correcciones.txt`](docs/prompts/prompt25_readme_correcciones.txt)).
+- **Decisión:** Aceptada con cambios
+- **Por qué:** La primera versión tenía cinco problemas:
+  - enlaces rotos a archivos del repositorio (`https://tests/...`, `https://docs/...`, con `?utm_source=chatgpt.com`);
+  - en «Uso de IA» borró el uso de ChatGPT en las semanas 5, 6 y 7;
+  - en «Pruebas» quitó los comandos `pytest -v`, `ruff check .` y `pip-audit`, la lista de archivos y el enlace al registro;
+  - el árbol de «Estructura» estaba incompleto (ChatGPT avisó que no tenía la lista de archivos);
+  - los títulos venían con negrita sobrante.
+
+  Se lo señalé, con la lista real de archivos (`git ls-files`) y las secciones actuales, y lo corrigió. Hice un solo cambio a mano: quité el número «24 prompts», porque la carpeta sigue creciendo.
+- **Verificación:**
+  - Comprobé que los 14 enlaces relativos del README apuntan a archivos que existen.
+  - Corrí los comandos del README: `pytest --cov=...` (102 aprobadas, 95 %), `ruff check .` (limpio) y `pip-audit -r requirements-dev.txt` (sin vulnerabilidades).
+  - Instalación, Ejecución y Autor quedaron sin cambios.
+- **Commit relacionado:** el de esta entrada
+
+## Resumen del cierre
+
+| Decisión | Cantidad |
+|---|---|
+| Aceptadas | 2 (entradas 19 y 20) |
+| Aceptadas con cambios | 5 (entradas 18, 21, 22, 23 y 24) |
+| Rechazadas | 0 |
+
+En el cierre no rechacé ninguna respuesta completa, pero 5 de 7 necesitaron cambios. Todos venían del mismo tipo de error: un dato que no salía del proyecto.
+- un tiempo de sustentación equivocado;
+- un mensaje de error comparado con el texto del código en vez de con el criterio;
+- una regla oculta que sacaba `.asistenteignore` de la lista;
+- una etiqueta de imagen `1.0.0` inventada;
+- enlaces y secciones del README perdidos al reescribirlo.
+
+Los encontré comparando cada respuesta con su fuente: la tarea, el criterio de aceptación y `pyproject.toml`.
+
+## Resumen de toda la bitácora (entradas 1 a 24)
+
+| Decisión | Semana 5 | Semana 6 | Semana 7 | Cierre | Total |
+|---|---|---|---|---|---|
+| Aceptadas | 2 | 3 | 3 | 2 | 10 |
+| Aceptadas con cambios | 2 | 1 | 2 | 5 | 10 |
+| Rechazadas | 2 | 1 | 1 | 0 | 4 |
+| **Total** | 6 | 5 | 6 | 7 | **24** |
+
+Menos de la mitad de las respuestas de la IA (10 de 24) se aceptaron sin cambios.

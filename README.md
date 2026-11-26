@@ -13,11 +13,16 @@ La CLI completa definida en el ADR-001 (CLI en Python, plugin de pytest y GitHub
 ## Requisitos
 
 - Python 3.11 o superior.
-- El código utiliza únicamente la librería estándar de Python.
-- Las herramientas de desarrollo tienen sus versiones fijadas en `requirements-dev.txt`:
-  - `pytest==9.2.0`
-  - `ruff==0.17.5`
-  - `pip-audit==2.10.1`
+- Dependencias de desarrollo definidas en `requirements-dev.txt`:
+
+| Herramienta | Versión | Propósito |
+|---|---|---|
+| pytest | 9.2.0 | Ejecución de pruebas automatizadas. |
+| ruff | 0.17.5 | Análisis estático de código. |
+| pip-audit | 2.10.1 | Auditoría de vulnerabilidades en dependencias. |
+| pytest-cov | 7.1.0 | Medición de cobertura de código. |
+
+El código del asistente utiliza únicamente la librería estándar de Python. Docker es opcional y permite ejecutar las pruebas en un entorno contenerizado.
 
 ## Instalación
 
@@ -74,6 +79,7 @@ Resultado esperado:
 En este ejemplo, el filtro excluye `.env` y devuelve únicamente la ruta permitida.
 
 ## Pruebas
+
 Para ejecutar las pruebas automatizadas:
 
 ```
@@ -86,14 +92,31 @@ Para ver cada caso por su nombre (por ejemplo `test_filtrar_rutas[S29]`):
 pytest -v
 ```
 
-Actualmente hay 100 pruebas distribuidas en los siguientes archivos:
+Actualmente hay 102 pruebas distribuidas en los siguientes archivos:
 
 - `tests/test_hu07_exclusion.py`: pruebas de la HU-07 (semana 5).
 - `tests/test_hu07_abuso.py`: pruebas de abuso del filtro (semana 6).
 - `tests/test_s7_seleccionar_archivos.py`, `tests/test_s7_normalizar_para_comparar.py` y `tests/test_s7_esta_excluido.py`: casos diseñados con particiones de equivalencia, valores límite y tabla de decisión (semana 7).
 - `tests/test_s7_datos_sinteticos.py`: fixture `repo_panaderia` con datos sintéticos (semana 7).
+- [`tests/test_aceptacion_hu07.py`](tests/test_aceptacion_hu07.py): dos pruebas de aceptación de HU-07, una por cada escenario del documento de requisitos, organizadas mediante la estructura Dado, Cuando y Entonces (cierre del proyecto).
 
 La tabla de casos, las pruebas de la IA descartadas o corregidas, los errores introducidos a propósito y el origen de los datos de prueba están en [`registro_pruebas.md`](registro_pruebas.md).
+
+Para ejecutar las pruebas y medir la cobertura de líneas y ramas:
+
+```
+pytest --cov=asistente --cov-branch --cov-report=term-missing
+```
+
+Resultados obtenidos:
+
+| Indicador | Resultado |
+|---|---:|
+| Pruebas aprobadas | 102 |
+| Cobertura de líneas | 96 % |
+| Cobertura de ramas | 92,86 % |
+
+Las líneas 58 y 106 de `asistente/exclusion.py` no están cubiertas. El análisis y la justificación de estos casos se encuentran en la sección 5 de [`registro_pruebas.md`](registro_pruebas.md).
 
 Para ejecutar el análisis estático con Ruff:
 
@@ -109,48 +132,93 @@ Para auditar las dependencias de desarrollo:
 pip-audit -r requirements-dev.txt
 ```
 
+## Integración continua y Docker
+
+El proyecto cuenta con un pipeline de integración continua mediante GitHub Actions, configurado en [`.github/workflows/ci.yml`](.github/workflows/ci.yml), que se ejecuta en cada push y pull request.
+
+El pipeline se divide en dos trabajos:
+
+| Trabajo | Descripción |
+|---|---|
+| `ci` | Ejecuta Ruff, pytest con cobertura y pip-audit. Almacena el informe `coverage.xml` como artefacto. |
+| `docker` | Construye la imagen Docker y ejecuta las pruebas dentro del contenedor. Solo se ejecuta si el trabajo `ci` finaliza correctamente. |
+
+Las ejecuciones del pipeline pueden consultarse en [GitHub Actions](https://github.com/kenneth0710/asistente-pruebas-pytest/actions).
+
+El [`Dockerfile`](Dockerfile) y el [`.dockerignore`](.dockerignore) permiten construir un entorno reproducible de pruebas. El contenedor ejecuta las pruebas con un usuario sin privilegios.
+
+Para construir la imagen:
+
+```
+docker build -t asistente-pruebas:0.1.0 .
+```
+
+Para ejecutar las pruebas dentro del contenedor:
+
+```
+docker run --rm asistente-pruebas:0.1.0
+```
+
+La imagen está destinada a la ejecución de pruebas, no al despliegue de un servicio.
+
+Documentación relacionada:
+
+- [Revisión de la configuración del pipeline y Dockerfile](docs/revision_configuracion.md).
+- [Plan de operación, monitoreo y mantenimiento](docs/plan_operacion.md).
+
 ## Estructura
+
 ```
 asistente-pruebas-pytest/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── asistente/
 │   ├── __init__.py
 │   └── exclusion.py
-├── tests/
-│   ├── test_hu07_exclusion.py
-│   ├── test_hu07_abuso.py
-│   ├── test_s7_seleccionar_archivos.py
-│   ├── test_s7_normalizar_para_comparar.py
-│   ├── test_s7_esta_excluido.py
-│   └── test_s7_datos_sinteticos.py
 ├── docs/
-│   └── prompts/
+│   ├── modulos/
+│   │   ├── README.md
+│   │   ├── modulo1_banco_de_prompts.pdf
+│   │   ├── modulo1_propuesta.pdf
+│   │   ├── modulo2_requisitos_y_bitacora.pdf
+│   │   └── modulo3_diseno.pdf
+│   ├── prompts/
+│   ├── plan_operacion.md
+│   └── revision_configuracion.md
+├── tests/
+│   ├── test_aceptacion_hu07.py
+│   ├── test_hu07_abuso.py
+│   ├── test_hu07_exclusion.py
+│   ├── test_s7_datos_sinteticos.py
+│   ├── test_s7_esta_excluido.py
+│   ├── test_s7_normalizar_para_comparar.py
+│   └── test_s7_seleccionar_archivos.py
 ├── .asistenteignore
+├── .dockerignore
 ├── .env.example
-├── pyproject.toml
-├── requirements-dev.txt
+├── .gitignore
 ├── bitacora_ia.md
-├── revision_seguridad.md
-├── registro_pruebas.md
+├── Dockerfile
 ├── LICENSE
-└── README.md
+├── pyproject.toml
+├── README.md
+├── registro_pruebas.md
+├── requirements-dev.txt
+└── revision_seguridad.md
 ```
 
-Descripción de los elementos principales:
+La carpeta [`docs/modulos/`](docs/modulos/) contiene los documentos PDF de la propuesta del proyecto, el banco de prompts, los requisitos y el diseño. Su archivo [`README.md`](docs/modulos/README.md) funciona como índice de estos documentos.
 
-- `asistente/`: contiene el código del proyecto.
-- `tests/`: contiene las pruebas automatizadas con pytest.
-- `docs/prompts/`: almacena los prompts exactos enviados a la IA.
-- `.asistenteignore`: contiene una lista de exclusión de ejemplo.
-- `.env.example`: sirve como plantilla para configurar las variables de entorno.
-- `pyproject.toml`: contiene la configuración de pytest y Ruff.
-- `requirements-dev.txt`: fija las versiones de las herramientas de desarrollo.
-- `bitacora_ia.md`: registra el uso de IA durante el desarrollo.
-- `revision_seguridad.md`: contiene el informe de revisión de seguridad.
-- `registro_pruebas.md`: tabla de casos, pruebas de la IA revisadas, errores introducidos a propósito y datos de prueba.
-- `LICENSE`: contiene los términos de la licencia MIT.
+La carpeta `docs/prompts/` contiene los prompts utilizados durante el proyecto, cuyos archivos individuales se omiten del árbol para facilitar su lectura.
 
 ## Uso de IA
-La IA se utilizó como apoyo durante las semanas 5, 6 y 7 del desarrollo.
+
+La IA se utilizó como apoyo durante los diferentes módulos del proyecto, las semanas 5, 6 y 7 del desarrollo y el cierre del proyecto.
+
+**Módulo 1:** Claude se utilizó como apoyo para elaborar el banco de prompts y redactar la propuesta del proyecto.
+
+**Módulos 2 y 3:** Gemini se utilizó como apoyo para la definición de requisitos y el diseño del software.
 
 **Semana 5:** ChatGPT propuso las pruebas, la implementación y el refactor de la funcionalidad HU-07.
 
@@ -158,7 +226,20 @@ La IA se utilizó como apoyo durante las semanas 5, 6 y 7 del desarrollo.
 
 **Semana 7:** ChatGPT propuso los casos de prueba con particiones de equivalencia, valores límite y tabla de decisión, escribió las pruebas a partir de la tabla revisada, corrigió el defecto D-01 que esas pruebas encontraron y generó los datos sintéticos. Cada caso y cada prueba se revisaron contra la regla; el detalle está en `registro_pruebas.md`.
 
+**Cierre del proyecto (26 de noviembre):** ChatGPT propuso el plan de cierre, el pipeline de integración continua, el análisis de cobertura, las pruebas de aceptación, el Dockerfile y el plan de operación. Las propuestas fueron sometidas a revisión humana antes de su aceptación. El proceso está documentado en las entradas 18 a 24 de `bitacora_ia.md`.
+
 Las sugerencias realizadas por la IA se verificaron mediante pruebas antes de integrarse. El detalle del proceso se encuentra en `bitacora_ia.md` y el informe de seguridad en `revision_seguridad.md`.
+
+La [`bitácora de IA`](bitacora_ia.md) contiene 24 entradas, clasificadas de la siguiente manera:
+
+| Resultado de la revisión | Cantidad |
+|---|---:|
+| Aceptadas | 10 |
+| Aceptadas con cambios | 10 |
+| Rechazadas | 4 |
+| **Total** | **24** |
+
+Los prompts utilizados se encuentran en [`docs/prompts/`](docs/prompts/). La bitácora permite consultar las decisiones tomadas durante la revisión de los resultados generados por la inteligencia artificial.
 
 ## Autor y licencia
 **Autor:** Kenneth Ramírez Burgos.

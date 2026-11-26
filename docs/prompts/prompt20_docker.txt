@@ -1,0 +1,55 @@
+Actúa como ingeniero DevOps.
+
+Contexto: es el mismo proyecto del workflow anterior (Python 3.12, paquete asistente/ que solo usa la librería estándar, pruebas en tests/, configuración en pyproject.toml, herramientas de desarrollo fijadas en requirements-dev.txt: pytest==9.2.0, ruff==0.17.5, pip-audit==2.10.1, pytest-cov==7.1.0). No hay API ni CLI todavía, así que el contenedor no publica ningún servicio: su objetivo es tener un entorno reproducible donde se ejecuten las pruebas igual que en el pipeline. En el repositorio hay un .env (ignorado por Git) con una clave de API, la carpeta .venv, .git, .pytest_cache, .ruff_cache, __pycache__ y coverage.xml. En mi equipo no tengo Docker, así que la imagen se va a construir y ejecutar en GitHub Actions.
+
+Este es el .github/workflows/ci.yml actual, que funciona:
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Calidad, pruebas y seguridad
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias de desarrollo
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Analizar código con Ruff
+        run: python -m ruff check .
+
+      - name: Ejecutar pruebas y medir cobertura
+        run: python -m pytest tests/ --cov=asistente --cov-branch --cov-report=term-missing --cov-report=xml
+
+      - name: Auditar dependencias
+        run: python -m pip_audit -r requirements-dev.txt
+
+      - name: Guardar informe de cobertura
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: informe-cobertura
+          path: coverage.xml
+          if-no-files-found: error
+
+Tarea: escribe un Dockerfile que construya una imagen con el proyecto y ejecute las pruebas al correr el contenedor, el .dockerignore, y un trabajo nuevo en el workflow que construya la imagen y ejecute el contenedor después de que pase el trabajo ci.
+
+Formato: los tres archivos completos (el workflow entero, con el trabajo nuevo) y, debajo, una explicación de cada línea del Dockerfile y del trabajo nuevo.
+
+Restricciones: imagen base con versión fijada y liviana; ningún secreto en los archivos ni dentro de la imagen; el contenedor no corre como root; el .dockerignore deja fuera .env, .git y los archivos generados; versiones fijadas y entre comillas; solo acciones oficiales de GitHub (actions/...) o comandos docker; permisos mínimos (contents: read); nada que oculte un fallo de las pruebas ni del build; nada de modo desarrollo.

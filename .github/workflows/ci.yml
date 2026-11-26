@@ -10,16 +10,16 @@ permissions:
 jobs:
   ci:
     name: Calidad, pruebas y seguridad
-    runs-on: ubuntu-24.04
+    runs-on: "ubuntu-24.04"
 
     steps:
       - name: Descargar el repositorio
-        uses: actions/checkout@v4.2.2
+        uses: "actions/checkout@v4.2.2"
         with:
           persist-credentials: false
 
       - name: Configurar Python
-        uses: actions/setup-python@v5.6.0
+        uses: "actions/setup-python@v5.6.0"
         with:
           python-version: "3.12"
 
@@ -36,9 +36,25 @@ jobs:
         run: python -m pip_audit -r requirements-dev.txt
 
       - name: Guardar informe de cobertura
-        uses: actions/upload-artifact@v4.6.2
+        uses: "actions/upload-artifact@v4.6.2"
         with:
           name: informe-cobertura
           path: coverage.xml
           if-no-files-found: error
 
+  docker:
+    name: Construcción y pruebas en Docker
+    needs: ci
+    runs-on: "ubuntu-24.04"
+
+    steps:
+      - name: Descargar el repositorio
+        uses: "actions/checkout@v4.2.2"
+        with:
+          persist-credentials: false
+
+      - name: Construir imagen Docker
+        run: docker build --tag "asistente-pruebas:1.0.0" .
+
+      - name: Ejecutar pruebas en el contenedor
+        run: docker run --rm "asistente-pruebas:1.0.0"

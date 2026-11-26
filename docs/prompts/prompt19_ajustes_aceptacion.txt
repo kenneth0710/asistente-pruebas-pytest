@@ -1,0 +1,9 @@
+Revisé tus pruebas: pasan, ruff no da avisos y detectan tres mutaciones (_esta_excluido siempre False, devolver siempre [] y no lanzar el error). Pero encontré tres problemas al compararlas con el criterio:
+
+1. En E2, assert str(error.value) == "El archivo '.env' está excluido." compara contra el texto exacto del código, no contra el criterio. El criterio solo dice «avisa que está excluido». Si alguien cambia la redacción del mensaje, la prueba falla aunque el criterio se siga cumpliendo. Comprueba lo que pide el criterio: que el aviso nombra el archivo .env y dice que está excluido.
+2. Los comentarios dicen solo «# Dado», «# Cuando» y «# Entonces». Pon en cada uno el texto de esa parte del criterio, con los datos, como en «# Dado: la lista de exclusión contiene .env, clientes_panaderia.csv y pedidos.db».
+3. listar_archivos saca .asistenteignore de la lista sin que el criterio lo diga. El criterio solo excluye los 3 archivos, así que .asistenteignore no debe filtrarse a escondidas: inclúyelo en las rutas y en la lista esperada de E1.
+
+Tarea: entrega el archivo tests/test_aceptacion_hu07.py completo con solo esos tres cambios.
+
+Restricciones: no cambies nada más; no toques el paquete asistente; el esperado sigue saliendo del criterio.

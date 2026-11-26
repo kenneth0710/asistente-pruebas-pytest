@@ -1,0 +1,24 @@
+Actúa como desarrollador que escribe pruebas de aceptación con pytest.
+
+Contexto: HU-07 del documento de requisitos (semana 3), texto exacto:
+«HU-07. Como líder del equipo, quiero que el asistente ignore los archivos de una lista de exclusión, para que las claves y los datos reales de clientes no salgan a una IA externa.
+Escenario 1: archivos excluidos. Dado que la lista de exclusión contiene .env, clientes_panaderia.csv y pedidos.db, cuando el desarrollador pide pruebas para el módulo de pedidos, entonces ninguno de esos 3 archivos se incluye en lo que se envía al servicio de IA.
+Escenario 2 (error): pedido explícito de un archivo excluido. Dado que .env está en la lista de exclusión, cuando el desarrollador pide al asistente revisar .env, entonces el asistente no envía el archivo y avisa que está excluido.»
+
+Lo que existe hoy (no hay CLI ni llamada a la IA todavía):
+- En asistente/exclusion.py: seleccionar_archivos(rutas: list[str], patrones: list[str], archivo_pedido: str | None = None) -> list[str]. Devuelve la lista de rutas que se pueden enviar (lo que «se envía al servicio de IA»). Si archivo_pedido está excluido, lanza ArchivoExcluidoError con el mensaje "El archivo '<ruta>' está excluido." y no devuelve nada.
+- La lista de exclusión del proyecto es el archivo .asistenteignore en la raíz del repositorio: una línea por patrón glob y comentarios con «#». Todavía no hay una función que lo lea.
+- Convenciones de las pruebas actuales: from asistente.exclusion import ArchivoExcluidoError, seleccionar_archivos; marcador @pytest.mark.criterio("HU-07-E1") registrado en pyproject.toml; ruff con reglas E, F, B y S (S101 permitido en tests/).
+
+Tarea:
+1. Clasifica cada escenario: ¿se puede automatizar ya, le falta un dato o no es observable con lo que existe hoy? Explica en una línea.
+2. Escribe tests/test_aceptacion_hu07.py con una prueba por escenario automatizable. Usa un repositorio ficticio de la panadería creado con tmp_path: un .asistenteignore con exactamente los patrones del criterio, los 3 archivos sensibles con contenido falso y algunos archivos del módulo de pedidos.
+
+Formato: primero la clasificación; después el archivo completo; al final, qué parte del criterio comprueba cada assert.
+
+Restricciones:
+- Un comentario «# Dado», «# Cuando» y «# Entonces» en cada prueba.
+- Usa los datos exactos del criterio y comprueba todo el «entonces», incluido el aviso del escenario 2.
+- El esperado sale del criterio, no de ejecutar el código.
+- No inventes funciones del paquete. Si necesitas leer el .asistenteignore o listar los archivos, hazlo dentro del archivo de pruebas con la librería estándar y di qué parte simula la CLI que aún no existe.
+- Solo datos inventados.

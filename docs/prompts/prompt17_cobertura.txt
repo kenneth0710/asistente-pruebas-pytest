@@ -1,0 +1,69 @@
+Actúa como analista de pruebas de software.
+
+Contexto: el pipeline mide la cobertura del paquete asistente con:
+pytest tests/ --cov=asistente --cov-branch --cov-report=term-missing
+
+Resultado (100 pruebas en verde):
+Name                     Stmts   Miss Branch BrPart  Cover   Missing
+asistente/__init__.py        0      0      0      0   100%
+asistente/exclusion.py      50      2     28      2    95%   58, 106
+TOTAL                       50      2     28      2    95%
+
+Código de las dos funciones donde están las líneas sin ejecutar (los números son los del archivo):
+
+25 def _normalizar_para_comparar(ruta: str) -> str:
+36     ruta = _normalizar_ruta(ruta)
+37     componentes = []
+39     for componente in ruta.split("/"):
+40         if componente in ("", "."):
+41             continue
+43         if componente == "..":
+44             if componentes and componentes[-1] != "..":
+45                 componentes.pop()
+46             elif not ruta.startswith("/"):
+47                 componentes.append(componente)
+48             continue
+50         if len(componente) == 2 and componente[1] == ":":
+51             componente = componente.lower()
+52         elif ":" in componente:
+53             componente = componente.split(":", 1)[0]
+55         componente = componente.rstrip(" .")
+57         if componente in ("", "."):
+58             continue
+60         componentes.append(componente)
+62     prefijo = "/" if ruta.startswith("/") else ""
+63     return (prefijo + "/".join(componentes)).lower()
+
+66 def _coincide_con_patron(ruta: str, patron: str) -> bool:
+77     componentes = ruta.split("/")
+78     if fnmatchcase(ruta, patron):
+79         return True
+81     return any(
+82         fnmatchcase("/".join(componentes[indice:]), patron)
+83         for indice in range(len(componentes))
+84     )
+
+87 def _esta_excluido(ruta: str, patrones_normalizados: list[str]) -> bool:
+99     ruta_normalizada = _normalizar_para_comparar(ruta)
+100    nombre_archivo = ruta_normalizada.rsplit("/", 1)[-1]
+102    for patron in patrones_normalizados:
+103        if _coincide_con_patron(ruta_normalizada, patron):
+104            return True
+105        if fnmatchcase(nombre_archivo, patron):
+106            return True
+108    return False
+
+Reglas escritas (el oráculo de las pruebas):
+- _normalizar_para_comparar: a) «\» se cambia por «/»; b) se quitan los componentes vacíos y los «.»; c) «..» elimina el componente anterior (sin anterior: en ruta relativa se conserva, en absoluta se descarta); d) a cada componente se le quitan los espacios y los puntos del final; e) si un componente tiene «:», se corta desde el «:», excepto una letra de unidad de dos caracteres como «C:»; f) el resultado queda en minúsculas; g) una ruta absoluta conserva el «/» inicial.
+- _esta_excluido: queda excluida si algún patrón glob coincide con la ruta completa, con cualquier final de la ruta formado por componentes completos, o con el nombre del archivo.
+
+Antecedentes del registro de pruebas:
+- Ambigüedad A7 (sin decidir): un componente «...» queda vacío después de la regla d y se descarta; la regla no dice si eso es lo correcto.
+- Ambigüedad A6 / pendiente P-05: «.. » (con espacio final) no se trata como «..».
+- Mutaciones manuales M5 (quitar la comparación por nombre de archivo, líneas 105-106) y M6 (empezar los finales de la ruta en 1) sobrevivieron a toda la suite; las clasifiqué como mutantes equivalentes (pendiente P-06, lógica duplicada).
+
+Tarea: analiza cada línea sin ejecutar. Para cada una di si se puede alcanzar con alguna entrada; si se puede, da la entrada mínima y explica qué regla decidiría el esperado; si no se puede, demuestra por qué. Después recomienda qué hacer con cada una.
+
+Formato: una tabla línea | ¿alcanzable? | entrada mínima o razón | regla que decide el esperado | recomendación. Debajo, un párrafo corto sobre qué dice este 95 % de la calidad de la suite.
+
+Restricciones: no modifiques el código; no propongas una prueba solo para subir el porcentaje: el esperado de cualquier prueba nueva debe salir de una regla escrita; si una línea depende de una ambigüedad sin decidir, dilo y no inventes el esperado.

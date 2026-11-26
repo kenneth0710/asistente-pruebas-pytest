@@ -346,3 +346,41 @@ Commit de partida: `7a2f207`. El registro completo está en [`registro_pruebas.m
   - En GitHub, la [ejecución en verde](https://github.com/kenneth0710/asistente-pruebas-pytest/actions/runs/45875920902).
   - Para comprobar que el pipeline no oculta fallos, rompí a propósito el esperado de una prueba en la rama `demo-pipeline-rojo` y la subí. El pipeline salió [en rojo](https://github.com/kenneth0710/asistente-pruebas-pytest/actions/runs/45876043174) con «1 failed, 99 passed». Después borré la rama.
 - **Commit relacionado:** `84ef55e`
+
+### Entrada 20
+
+- **Fecha:** 2026-11-26
+- **Prompt o sugerencia:** Prompt 17 ([`prompt17_cobertura.txt`](docs/prompts/prompt17_cobertura.txt)). Le pasé el reporte de cobertura del pipeline (95 %; faltan las líneas 58 y 106 de `exclusion.py`), el código, las reglas escritas y las ambigüedades A6 y A7. Le pedí analizar cada línea sin ejecutar, con la condición de no proponer pruebas solo para subir el porcentaje. ChatGPT respondió:
+  - la línea 58 es alcanzable con `" "` o `"..."`, pero su esperado depende de la ambigüedad A7;
+  - la 106 es inalcanzable, porque el nombre del archivo ya es el último final que compara `_coincide_con_patron`.
+- **Decisión:** Aceptada
+- **Por qué:** Coincide con mi análisis previo y con el registro. A7 estaba «pendiente con el docente», y M5 ya estaba clasificado como mutante equivalente. Además, no inventó un esperado para la línea 58.
+- **Verificación:**
+  - Ejecuté `" "` y `datos/.../clientes_panaderia.csv` midiendo la cobertura: la línea 58 se ejecuta.
+  - Para la línea 106 probé 200 000 rutas y patrones aleatorios, y ningún caso la alcanza.
+  - Las cifras coinciden con `coverage.xml`: líneas 48/50 y ramas 26/28.
+  - Lo registré en la sección 5 de [`registro_pruebas.md`](registro_pruebas.md).
+- **Commit relacionado:** el de esta entrada (cobertura y aceptación)
+
+### Entrada 21
+
+- **Fecha:** 2026-11-26
+- **Prompt o sugerencia:** Prompt 18 ([`prompt18_aceptacion.txt`](docs/prompts/prompt18_aceptacion.txt)). Con el texto exacto de los dos escenarios de HU-07, le pedí clasificarlos y escribir `tests/test_aceptacion_hu07.py`:
+  - una prueba por escenario, con comentarios de dado, cuando y entonces;
+  - comprobar todo el «entonces»;
+  - sin funciones inventadas en el paquete.
+
+  Después le pedí tres ajustes con el prompt 19 ([`prompt19_ajustes_aceptacion.txt`](docs/prompts/prompt19_ajustes_aceptacion.txt)).
+- **Decisión:** Aceptada con cambios
+- **Por qué:** La primera versión pasaba y detectaba 3 mutaciones, pero tenía tres problemas:
+  - E2 comparaba el mensaje exacto del código en vez de lo que pide el criterio («avisa que está excluido»);
+  - los comentarios no traían el texto del criterio;
+  - `listar_archivos` quitaba `.asistenteignore` de la lista sin que el criterio lo dijera: una regla inventada que cambiaba la lista esperada.
+
+  No los corregí yo: se los señalé a ChatGPT y el `diff` muestra que cambió solo esas tres cosas.
+- **Verificación:**
+  - 102 pruebas en verde y `ruff check .` sin avisos.
+  - Las mutaciones «nada se excluye», «devuelve siempre `[]`» y «no lanza el error» hacen fallar las pruebas.
+  - Con otra redacción del mensaje de error, las pruebas siguen en verde.
+  - El detalle está en la sección 6 de [`registro_pruebas.md`](registro_pruebas.md).
+- **Commit relacionado:** el de esta entrada (cobertura y aceptación)

@@ -12,14 +12,17 @@ Probé las tres funciones de `asistente/exclusion.py` que tienen reglas de negoc
 
 Las reglas salen del contrato de la semana 5 (README) y de las correcciones H-01 y H-02 de la semana 6 (`revision_seguridad.md`). Esas reglas son el oráculo: los esperados salen de ellas, nunca de ejecutar el código.
 
-Resultado final: **100 pruebas en verde** con `pytest -v` y `ruff check .` sin avisos.
+Resultado final: **102 pruebas en verde** con `pytest -v` y `ruff check .` sin avisos.
 - 24 pruebas de las semanas 5 y 6.
 - 74 casos nuevos de las tres funciones.
 - 2 pruebas con datos sintéticos.
+- 2 pruebas de aceptación de HU-07 (sección 6, agregadas el 2026-11-26).
+
+La cobertura la mide el pipeline en cada push (sección 5): 96 % de líneas y 92,86 % de ramas.
 
 Las pruebas nuevas encontraron un **defecto real (D-01)**, que se corrigió en el código sin tocar ninguna prueba.
 
-Los prompts exactos están en [`docs/prompts/`](docs/prompts/), del 8 al 14, y en la bitácora, entradas 12 a 18.
+Los prompts exactos están en [`docs/prompts/`](docs/prompts/), del 8 al 14, y en la bitácora, entradas 12 a 17. La cobertura y las pruebas de aceptación usan los prompts 17 a 19 (entradas 20 y 21).
 
 ## 1. Tabla de casos
 
@@ -234,3 +237,55 @@ El fixture `repo_panaderia(tmp_path)` de `tests/test_s7_datos_sinteticos.py` cre
 - **Un patrón con comodín:** `*.bak`.
 
 `test_filtrar_repositorio_panaderia` comprueba que salen exactamente los 6 archivos permitidos, comparando contra una lista fija. `test_verificar_datos_sinteticos_del_csv` comprueba que los casos difíciles existen de verdad en el CSV.
+
+## 5. Cobertura (semana 8, medida por el pipeline)
+
+Comando del pipeline: `pytest tests/ --cov=asistente --cov-branch --cov-report=term-missing --cov-report=xml`. El reporte `coverage.xml` queda como artefacto de cada ejecución en GitHub Actions.
+
+| Medida | Resultado |
+|---|---|
+| Líneas | 96 % (48 de 50) |
+| Ramas | 92,86 % (26 de 28) |
+| Combinada (la que imprime pytest-cov) | 95 % |
+| Líneas sin ejecutar | `exclusion.py`: 58 y 106 |
+
+Le pedí a ChatGPT que analizara las dos líneas con el prompt 17 ([`prompt17_cobertura.txt`](docs/prompts/prompt17_cobertura.txt), entrada 20 de la bitácora). La condición era que no propusiera pruebas solo para subir el porcentaje. Después comprobé cada afirmación ejecutando código:
+
+| Línea | ¿Se puede alcanzar? | Comprobación | Decisión |
+|---|---|---|---|
+| 58 (`continue` cuando un componente queda vacío después de la regla d) | **Sí.** Con `" "` o con `datos/.../clientes_panaderia.csv`. | Ejecuté las dos entradas midiendo la cobertura: la línea 58 se ejecuta. Hoy `...` desaparece y la ruta queda `datos/clientes_panaderia.csv`. | **No escribo la prueba todavía.** Su esperado depende de la ambigüedad **A7**: la regla no dice si un componente que queda vacío después de la regla d se descarta. Escribirla ahora sería copiar lo que hace el código, no la regla. Queda pendiente con el docente, junto con A6 (`.. `). |
+| 106 (`return True` por el nombre del archivo) | **No.** Es código muerto. | El nombre del archivo es el último «final de la ruta», y `_coincide_con_patron` ya lo compara en la línea 82. Si coincide, la función sale en la línea 104. Lo confirmé con 200 000 rutas y patrones aleatorios: ningún caso hace verdadera la línea 105 sin que antes lo sea la 103. | **No se puede probar.** Confirma que M5 es un mutante equivalente (sección 3). Se resuelve quitando la comparación duplicada en el refactor pendiente **P-06**, no con una prueba. |
+
+**Qué dice este 95 %.** Las dos líneas que faltan no son descuidos de la suite: una espera una decisión de requisitos y la otra no se puede ejecutar. Pero la cobertura sola no prueba la calidad. En la semana 7, `test_no_devolver_archivos_excluidos` ejecutaba casi todo el código y aun así seguía en verde con una función que devolvía siempre `[]` (mutación M8). Lo que muestra la calidad de la suite son las mutaciones de la sección 3: 7 de 9 detectadas y las otras 2 equivalentes.
+
+## 6. Pruebas de aceptación de HU-07 (semana 8)
+
+Archivo: [`tests/test_aceptacion_hu07.py`](tests/test_aceptacion_hu07.py). Las generó ChatGPT con el prompt 18 a partir del **texto exacto** de los criterios del documento de requisitos de la semana 3. Las corrigió con el prompt 19, después de mi revisión (entrada 21 de la bitácora).
+
+**Clasificación de los escenarios.** Los dos se pueden automatizar hoy en la librería: `seleccionar_archivos` devuelve justo «lo que se envía al servicio de IA», y `ArchivoExcluidoError` es el aviso. Lo que **todavía no se puede observar** es el envío real a la IA y el aviso que vería el usuario en pantalla, porque la CLI no existe. Las pruebas simulan esa parte, y la simulación está declarada en el propio archivo:
+- `repositorio_panaderia` crea un repositorio ficticio en `tmp_path`;
+- `leer_patrones` lee el `.asistenteignore`;
+- `listar_archivos` reúne los archivos.
+
+| Criterio (texto del requisito) | Prueba | Dado | Cuando | Entonces (qué se comprueba) |
+|---|---|---|---|---|
+| HU-07-E1: archivos excluidos | `test_archivos_excluidos_no_se_incluyen` | `.asistenteignore` con `.env`, `clientes_panaderia.csv` y `pedidos.db`, y los 3 archivos con contenido falso | `seleccionar_archivos` con todos los archivos del repositorio | Ninguno de los 3 está en el resultado, y el resultado es **exactamente** `.asistenteignore` más los 3 archivos del módulo `pedidos/` |
+| HU-07-E2: pedido explícito de un archivo excluido | `test_pedido_explicito_de_archivo_excluido` | `.env` está en la lista de exclusión | `archivo_pedido=".env"` | Se lanza `ArchivoExcluidoError`, así que no se devuelve nada para enviar, y el aviso nombra `.env` y dice «excluido» |
+
+**Lo que corregí de la primera versión de la IA** (prompt 19):
+
+| Problema | Por qué era un problema | Corrección |
+|---|---|---|
+| E2 comparaba el mensaje completo: `== "El archivo '.env' está excluido."` | El esperado salía del código, no del criterio. El criterio solo pide que avise que está excluido, y con otra redacción la prueba fallaba aunque el criterio se cumpliera. | Comprueba que el aviso nombra `.env` y dice «excluido». |
+| Comentarios `# Dado`, `# Cuando` y `# Entonces` vacíos | No dejaban ver qué parte del criterio cubría cada línea. | Cada comentario lleva el texto del criterio con sus datos. |
+| `listar_archivos` quitaba `.asistenteignore` a escondidas | Era una regla inventada. El criterio solo excluye 3 archivos, y esa regla cambiaba la lista exacta esperada en E1. | `.asistenteignore` entra en las rutas y en la lista esperada. |
+
+**Verificación.**
+- Las 2 pruebas pasan y ruff no da avisos; la suite completa queda en 102 aprobadas.
+- Con mutaciones, una a la vez y deshechas después:
+  - `_esta_excluido` devuelve siempre `False`: fallan las 2;
+  - `seleccionar_archivos` devuelve siempre `[]`: falla E1, gracias a la lista exacta;
+  - se quita el `raise`: falla E2.
+- Cambié la redacción del mensaje del error y las 2 pruebas siguieron en verde: ya no dependen del texto exacto.
+
+**Lo que no cubren.** No prueban que la CLI lea el `.asistenteignore` real ni que el aviso llegue a la pantalla. Eso queda pendiente hasta que exista la CLI (ADR-001).

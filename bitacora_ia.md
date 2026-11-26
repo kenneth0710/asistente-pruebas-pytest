@@ -309,3 +309,40 @@ Commit de partida: `7a2f207`. El registro completo está en [`registro_pruebas.m
   - una prueba que seguía en verde con una función inútil;
   - dos mutantes imposibles de detectar, que delatan lógica duplicada para el próximo refactor.
 - La IA fue muy útil para proponer casos y escribir el código de las pruebas, pero propuso de más: 100 casos, muchos redundantes. Decidir cuáles sobraban y cuáles eran débiles fue trabajo mío.
+
+---
+
+# Cierre del proyecto: plan y pipeline (módulo 6)
+
+- **Asistente:** ChatGPT (versión web), en una conversación nueva el 26 de noviembre de 2026.
+- **Prompts:** el del pipeline sigue la plantilla «Actúa como ingeniero DevOps…» del material «Pipelines y contenedores» (semana 9), adaptada a este proyecto.
+
+### Entrada 18
+
+- **Fecha:** 2026-11-26
+- **Prompt o sugerencia:** Prompt 15 ([`prompt15_plan_cierre.txt`](docs/prompts/prompt15_plan_cierre.txt)). Le di el estado real del repositorio, lo que falta y las condiciones de la entrega final, y le pedí un plan ordenado que empezara por el pipeline. ChatGPT propuso 12 pasos:
+  - primero pipeline, cobertura, pruebas de aceptación y Docker;
+  - después plan de operación, evidencias, bitácora y README;
+  - al final informe, diapositivas, validación y ensayo.
+- **Decisión:** Aceptada con cambios
+- **Por qué:** El orden respeta las dependencias y no inventa funcionalidades: deja la CLI y las demás historias como pendientes declarados. Pero se equivocó en un dato: reservó «seis minutos de exposición», y la sustentación es de 10 minutos más 4 de preguntas. Corregí ese dato y seguí el resto del plan.
+- **Verificación:** Comparé cada paso con la tarea «Proyecto Final Integrador», la plantilla del informe y la lista de evidencias por módulo del material «Tendencias y sustentación».
+- **Commit relacionado:** `84ef55e` (el prompt queda en `docs/prompts`)
+
+### Entrada 19
+
+- **Fecha:** 2026-11-26
+- **Prompt o sugerencia:** Prompt 16 ([`prompt16_pipeline.txt`](docs/prompts/prompt16_pipeline.txt)). Le pedí un workflow de GitHub Actions con ruff, pytest con cobertura de líneas y ramas, y pip-audit. Las restricciones eran las del curso: `contents: read`, ningún secreto, versiones fijadas y entre comillas, solo acciones oficiales y nada que oculte un fallo. ChatGPT entregó `ci.yml` y la línea `pytest-cov==7.1.0` para `requirements-dev.txt`.
+- **Decisión:** Aceptada
+- **Por qué:** Lo revisé línea por línea con la lista de la semana 9; el detalle está en [`docs/revision_configuracion.md`](docs/revision_configuracion.md). Cumple todas las restricciones:
+  - no hay `continue-on-error` ni `|| true`;
+  - `persist-credentials: false` evita dejar el token en el checkout.
+
+  Usé el archivo tal cual. Solo quité una línea en blanco que se coló al copiarlo y agregué `coverage.xml` y `.coverage` al `.gitignore`.
+- **Verificación:**
+  - Comprobé con `gh api` que existen las etiquetas `actions/checkout@v4.2.2`, `actions/setup-python@v5.6.0` y `actions/upload-artifact@v4.6.2`, y en PyPI la versión `pytest-cov` 7.1.0.
+  - `actionlint` no dio avisos.
+  - En local, los mismos pasos dieron: 100 aprobadas, 95 % de cobertura y ninguna vulnerabilidad conocida.
+  - En GitHub, la [ejecución en verde](https://github.com/kenneth0710/asistente-pruebas-pytest/actions/runs/45875920902).
+  - Para comprobar que el pipeline no oculta fallos, rompí a propósito el esperado de una prueba en la rama `demo-pipeline-rojo` y la subí. El pipeline salió [en rojo](https://github.com/kenneth0710/asistente-pruebas-pytest/actions/runs/45876043174) con «1 failed, 99 passed». Después borré la rama.
+- **Commit relacionado:** `84ef55e`

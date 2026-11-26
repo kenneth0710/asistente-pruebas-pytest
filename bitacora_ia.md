@@ -384,3 +384,44 @@ Commit de partida: `7a2f207`. El registro completo está en [`registro_pruebas.m
   - Con otra redacción del mensaje de error, las pruebas siguen en verde.
   - El detalle está en la sección 6 de [`registro_pruebas.md`](registro_pruebas.md).
 - **Commit relacionado:** el de esta entrada (cobertura y aceptación)
+
+### Entrada 22
+
+- **Fecha:** 2026-11-26
+- **Prompt o sugerencia:** Prompt 20 ([`prompt20_docker.txt`](docs/prompts/prompt20_docker.txt)), con la plantilla del profesor de la semana 9. Le pedí tres cosas:
+  - un Dockerfile que ejecute las pruebas en un entorno reproducible (no hay API ni CLI que publicar);
+  - el `.dockerignore`;
+  - un trabajo del pipeline que construya y ejecute la imagen, porque no tengo Docker en mi equipo.
+
+  Las restricciones fueron las del curso: imagen fijada y liviana, sin secretos, sin root, sin modo desarrollo y nada que oculte fallos. Después, con el prompt 21 ([`prompt21_etiqueta_imagen.txt`](docs/prompts/prompt21_etiqueta_imagen.txt)), le pedí corregir la etiqueta de la imagen.
+- **Decisión:** Aceptada con cambios
+- **Por qué:** El Dockerfile cumple las seis preguntas de la semana. La imagen base está fijada, el usuario es 10001 y solo copia `pyproject.toml`, `asistente/` y `tests/`, así que el `.env` no puede entrar. El detalle está en [`docs/revision_configuracion.md`](docs/revision_configuracion.md). Encontré dos cosas:
+  - etiquetó la imagen como `1.0.0`, un dato inventado porque el proyecto va en `0.1.0` (lo corrigió con el prompt 21);
+  - sin que se lo pidiera, puso comillas en `uses:` y `runs-on:` del trabajo `ci`. No cambia nada y lo acepté.
+- **Verificación:**
+  - La API de Docker Hub confirma que existe la etiqueta `python:3.12.12-slim-bookworm`.
+  - hadolint y actionlint no dieron avisos.
+  - Comprobé que ninguna prueba lee archivos que la imagen no copia.
+  - En GitHub Actions, el trabajo `docker` construyó `asistente-pruebas:0.1.0` y pasó «102 passed» dentro del contenedor ([ejecución 45879288064](https://github.com/kenneth0710/asistente-pruebas-pytest/actions/runs/45879288064)). El pipeline completo tardó 54 s, por debajo de los 5 min de RNF-03.
+- **Commit relacionado:** `051aae4` (Docker) y `d177c2f` (etiqueta)
+
+### Entrada 23
+
+- **Fecha:** 2026-11-26
+- **Prompt o sugerencia:** Prompt 22 ([`prompt22_plan_operacion.txt`](docs/prompts/prompt22_plan_operacion.txt)). Le pedí [`docs/plan_operacion.md`](docs/plan_operacion.md), con estos temas:
+  - registros, cuidando la Ley 1581;
+  - las cuatro señales doradas, con umbrales sacados de los RNF;
+  - incidentes con análisis sin culpables;
+  - dependencias;
+  - cambios del modelo de Gemini;
+  - qué existe hoy y qué es propuesta.
+
+  Le prohibí presentar números inventados como medidos. Después, con el prompt 23 ([`prompt23_medicion_rnf02.txt`](docs/prompts/prompt23_medicion_rnf02.txt)), le pasé la medición de RNF-02.
+- **Decisión:** Aceptada con cambios
+- **Por qué:** El plan separa en cada tabla lo existente de lo propuesto, y marca como «supuesto operativo» todo umbral que no sale de un RNF. No dio por cumplido RNF-08, y tiene razón: las 9 mutaciones manuales no son el experimento de 10 errores sembrados que pide el requisito. Solo le faltaba una medición que sí se podía hacer: dejaba RNF-02 «pendiente», y lo medí.
+- **Verificación:**
+  - Comprobé que el enlace a la Ley 1581 de 2012 abre la norma en el Gestor Normativo de Función Pública.
+  - Medí la suite local tres veces (Windows 11, i5-12450H, Python 3.12.10): 102 aprobadas, 0,58 s en total en cada una, frente al límite de 120 s.
+  - ChatGPT actualizó solo la sección 2.1 y la fila de RNF-02, y apliqué esos dos fragmentos sin cambios.
+  - Revisé que los ejemplos de registros no tengan datos personales.
+- **Commit relacionado:** `d177c2f`

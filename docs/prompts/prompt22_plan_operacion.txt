@@ -1,0 +1,31 @@
+Actúa como ingeniero de operaciones.
+
+Contexto: es el mismo proyecto. Hoy existe:
+- la librería asistente/exclusion.py (filtro de HU-07), con 102 pruebas;
+- el pipeline de GitHub Actions con dos trabajos: ci (ruff, pytest con cobertura, pip-audit) y docker (construye la imagen y ejecuta las pruebas dentro). La última ejecución tardó 54 segundos en total;
+- el Dockerfile y el .asistenteignore.
+
+Todavía no existe la CLI. Según el ADR-001, la CLI enviará fragmentos de código y criterios de aceptación a la API de Gemini y la clave va en GEMINI_API_KEY, en un .env que no se sube. No hay servidor, base de datos propia ni usuarios en producción. El equipo es de cinco estudiantes que desarrollan la app de pedidos de una panadería de barrio en Neiva.
+
+Requisitos no funcionales que aplican a la operación:
+- RNF-02: la suite completa termina en máximo 2 minutos en local.
+- RNF-03: el pipeline termina en menos de 5 minutos por pull request.
+- RNF-06: el asistente envía 0 archivos de la lista de exclusión al servicio de IA externo.
+- RNF-07: el 100 % de las pruebas generadas usa datos inventados.
+- RNF-08: con 10 errores sembrados, las pruebas detectan al menos 8.
+
+Tarea: escribe docs/plan_operacion.md, el plan de monitoreo y mantenimiento del proyecto, con estas secciones:
+1. Qué se registra (logs) y qué nunca se registra (Ley 1581 de 2012).
+2. Métricas y alertas: las cuatro señales doradas (latencia, tráfico, errores, saturación) aplicadas a este proyecto, cada una con su umbral, de dónde sale el umbral y cuándo suena la alerta.
+3. Incidentes: cómo se atiende uno y una plantilla de análisis sin culpables.
+4. Dependencias y vulnerabilidades: cómo se mantienen al día.
+5. El modelo de IA en operación: qué cambia si Google actualiza el modelo de Gemini y cómo se detecta que las pruebas propuestas empeoraron.
+6. Qué existe hoy y qué es propuesta.
+
+Formato: Markdown listo para pegar, con tablas donde ayuden.
+
+Restricciones:
+- Distingue siempre lo que ya funciona de lo que es propuesta para cuando exista la CLI.
+- Ningún número inventado presentado como medido: los umbrales salen de los RNF o se marcan como supuestos.
+- Ningún dato personal en ejemplos de registros.
+- No propongas servicios de pago ni herramientas que el equipo no pueda usar gratis.

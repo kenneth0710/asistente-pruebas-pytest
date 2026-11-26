@@ -1,0 +1,5 @@
+Revisé los tres archivos: hadolint y actionlint no dan avisos, la imagen base python:3.12.12-slim-bookworm existe en Docker Hub y en GitHub Actions los dos trabajos salieron en verde (102 pruebas dentro del contenedor).
+
+Encontré un problema: etiquetaste la imagen como asistente-pruebas:1.0.0, pero pyproject.toml dice version = "0.1.0". La etiqueta no sale de ningún dato del proyecto.
+
+Tarea: entrega solo el trabajo docker corregido para que la etiqueta coincida con la versión del proyecto. No cambies nada más.

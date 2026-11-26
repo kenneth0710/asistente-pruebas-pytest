@@ -1,0 +1,5 @@
+Revisé el plan: distingue bien lo existente de lo propuesto, los umbrales que no salen de los RNF están marcados como supuestos y comprobé que el enlace a la Ley 1581 de 2012 es correcto. Acepto que RNF-08 no está demostrado: las 9 mutaciones manuales no son el experimento de 10 errores sembrados.
+
+Para RNF-02 ya hay una medición documentada. La hice el 2026-11-26 en el equipo de desarrollo (Windows 11, Intel Core i5-12450H, 16 GB de RAM, Python 3.12.10) con «python -m pytest tests/ -q», tres veces seguidas: 102 aprobadas, 0,12 s según pytest y 0,58 s de tiempo total del comando en las tres ejecuciones.
+
+Tarea: entrega solo los fragmentos que cambian del plan (el «Estado actual» de la sección 2.1 y la fila de RNF-02 de la tabla 6.3) para incluir esa medición. No cambies nada más.

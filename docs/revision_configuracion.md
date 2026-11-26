@@ -24,7 +24,7 @@ El pipeline lo pedí desde el principio con las restricciones de seguridad del c
 | ci.yml:17, 22, 39 | `uses:` sin comillas | Parece un problema por la restricción «entre comillas», pero no lo es: YAML lee `actions/checkout@v4.2.2` como texto. Las comillas sí importan en `python-version: "3.12"`, y ahí están. |
 | ci.yml:18-19 | Credenciales | `persist-credentials: false`: el token no queda guardado en el checkout. |
 | ci.yml:26-27 | Dependencias | Instala `requirements-dev.txt` con versiones fijadas; se agregó `pytest-cov==7.1.0` (existe en PyPI y funciona con pytest 9.2.0). |
-| ci.yml:29-36 | ¿Un fallo detiene el pipeline? | No hay `continue-on-error` ni `|| true`. Ruff, pytest y pip-audit terminan con error si encuentran algo. Comprobado con una prueba rota a propósito (sección 4). |
+| ci.yml:29-36 | ¿Un fallo detiene el pipeline? | No hay `continue-on-error` ni `\|\| true`. Ruff, pytest y pip-audit terminan con error si encuentran algo. Comprobado con una prueba rota a propósito (sección 4). |
 | ci.yml:38-43 | Artefacto | Sube `coverage.xml` solo si todo pasó; si una prueba falla, el reporte de la consola sigue en el log. |
 
 ## 3. Lo que encontraron las herramientas

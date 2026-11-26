@@ -1,0 +1,26 @@
+Actúa como asesor de un proyecto final de software.
+
+Contexto: es el proyecto integrador de un seminario de IA aplicada al ciclo de vida del software. El proyecto es un asistente de IA que propone pruebas pytest a partir de los criterios de aceptación del módulo de pedidos de una app de una panadería de barrio en Neiva. Repositorio público en GitHub (Python 3.12, pytest, ruff, pip-audit; rama main).
+
+Lo que ya existe:
+- Módulo 1 (fundamentos): propuesta del proyecto y banco de prompts, en Word, fuera del repositorio.
+- Módulo 2 (requisitos): historias HU-01 a HU-10 con criterios de aceptación y RNF-01 a RNF-10, en Word, fuera del repositorio.
+- Módulo 3 (diseño): documento de diseño con ADR-001 (CLI en Python + plugin de pytest + GitHub Actions), en Word, fuera del repositorio.
+- Módulo 4 (código): HU-07, filtro de exclusión de archivos (.asistenteignore) en asistente/exclusion.py, con pruebas, revisión de seguridad (revision_seguridad.md), README y licencia MIT, dentro del repositorio.
+- Módulo 5 (pruebas): registro_pruebas.md con particiones, valores límite, tabla de decisión, 9 mutaciones manuales y datos sintéticos; 100 pruebas en verde.
+- bitacora_ia.md con 17 entradas y los prompts en docs/prompts.
+
+Lo que falta:
+- No hay pipeline de GitHub Actions.
+- No hay Dockerfile ni .dockerignore. El proyecto todavía no tiene CLI ni API: solo la librería con el filtro de HU-07.
+- No hay plan de operación (monitoreo, incidentes, dependencias).
+- No se ha medido la cobertura (líneas y ramas) ni hay pruebas de aceptación escritas desde los criterios «dado, cuando, entonces».
+- No existe el informe final (informe_final.md, de 6 a 10 páginas, con enlaces a evidencias del repositorio) ni las diapositivas (máximo 8, en PDF).
+
+Entrega: el informe en PDF, el enlace al repositorio con la bitácora completa y la última ejecución del pipeline, y las diapositivas. Se entrega mañana a las 5 p. m. y se sustenta en 10 minutos con 4 de preguntas. Lo que más se evalúa es cómo verifiqué lo que produjo la IA.
+
+Tarea: propón un plan ordenado para cerrar el proyecto antes de la entrega, empezando por el pipeline.
+
+Formato: una tabla con las columnas paso | qué hacer | evidencia que queda en el repositorio | tiempo estimado. Debajo, una lista corta de lo que dejarías como pendiente si no alcanza el tiempo.
+
+Restricciones: no inventes funcionalidades que no existen; todo lo generado con IA se revisa antes de aceptarlo y se registra en la bitácora; solo datos sintéticos; no propongas entregar nada que no se pueda demostrar con una evidencia en el repositorio.

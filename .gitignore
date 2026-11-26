@@ -9,3 +9,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
+
+# Reportes de cobertura (se generan en cada ejecución)
+.coverage
+coverage.xml

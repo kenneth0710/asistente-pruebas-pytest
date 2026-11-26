@@ -1,0 +1,9 @@
+Actúa como ingeniero DevOps.
+
+Contexto: proyecto Python 3.12 (pyproject.toml pide requires-python >=3.11) con pytest y ruff; la configuración de los dos está en pyproject.toml. El código está en el paquete asistente/ y solo usa la librería estándar, así que no hay requirements.txt de ejecución: las herramientas de desarrollo están fijadas en requirements-dev.txt (pytest==9.2.0, ruff==0.17.5, pip-audit==2.10.1). Las pruebas están en tests/. No hay API ni CLI todavía. Repositorio público en GitHub, rama principal main.
+
+Tarea: escribe un workflow de GitHub Actions (.github/workflows/ci.yml) que en cada push y pull request ejecute ruff, pytest con cobertura de líneas y ramas del paquete asistente, y pip-audit sobre requirements-dev.txt.
+
+Formato: el archivo completo, las líneas que hay que agregar a requirements-dev.txt y, debajo, una explicación de cada línea.
+
+Restricciones: permisos mínimos (contents: read); ningún secreto en el archivo; versiones fijadas y entre comillas; solo acciones oficiales; nada que oculte un fallo de las pruebas.

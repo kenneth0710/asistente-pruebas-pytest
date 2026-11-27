@@ -233,14 +233,14 @@ La IA se utilizó como apoyo durante los diferentes módulos del proyecto, las s
 
 Las sugerencias realizadas por la IA se verificaron mediante pruebas antes de integrarse. El detalle del proceso se encuentra en `bitacora_ia.md` y el informe de seguridad en `revision_seguridad.md`.
 
-La [`bitácora de IA`](bitacora_ia.md) contiene 26 entradas, clasificadas de la siguiente manera:
+La [`bitácora de IA`](bitacora_ia.md) contiene 28 entradas, clasificadas de la siguiente manera:
 
 | Resultado de la revisión | Cantidad |
 |---|---:|
-| Aceptadas | 10 |
-| Aceptadas con cambios | 12 |
+| Aceptadas | 11 |
+| Aceptadas con cambios | 13 |
 | Rechazadas | 4 |
-| **Total** | **26** |
+| **Total** | **28** |
 
 Los prompts utilizados se encuentran en [`docs/prompts/`](docs/prompts/). La bitácora permite consultar las decisiones tomadas durante la revisión de los resultados generados por la inteligencia artificial.
 

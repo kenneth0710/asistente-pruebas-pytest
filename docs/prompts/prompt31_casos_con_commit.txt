@@ -1,0 +1,32 @@
+El profesor publicó la rúbrica del proyecto final. El criterio 4 (Verificación, 25 puntos) pide para el nivel más alto «tres o más casos de fases distintas, con lo que propuso la IA, el error, cómo se detectó (prueba, linter, revisión) y la corrección con su commit». El nivel siguiente es «tres casos completos, dos de la misma fase o uno sin commit».
+
+Revisé la sección 4 del informe contra ese criterio y encontré dos problemas:
+
+1. Los casos 1 (Requisitos) y 2 (Diseño) enlazan el PDF del módulo, pero no un commit. La corrección se hizo en los documentos de las semanas 3 y 4, que entregué en Q10 antes de que existiera el repositorio. Esos documentos se publicaron en el repositorio en el commit fad31af («Documentos de los módulos 1 a 3 (semanas 2 a 4) en docs/modulos, revisados antes de publicar»). Enlace: https://github.com/kenneth0710/asistente-pruebas-pytest/commit/fad31af
+
+2. Los casos 3 y 4 dicen los dos «Código» en la fase:
+   - Caso 3: «**Fase:** Código y definición del contrato, semana 5.»
+   - Caso 4: «**Fase:** Código y pruebas, semanas 6 y 7.»
+   El defecto D-01 lo introdujo el cambio de la revisión de código de la semana 6, pero se detectó en la fase de pruebas de la semana 7, con las pruebas diseñadas desde las reglas (commit 3361726 con las 8 pruebas en rojo, commit 3238135 con la corrección). En la tabla de la sección 3 este trabajo corresponde a la fila «5. Pruebas».
+
+Estas son las líneas actuales que hay que cambiar:
+
+Caso 1, línea «Qué hice»:
+- **Qué hice:** Reescribí los escenarios utilizando únicamente hechos respaldados por la entrevista. Trasladé las condiciones sin evidencia a preguntas pendientes y corregí la identificación de actores que no utilizaban directamente el sistema. El resultado se encuentra en el [documento de requisitos del módulo 2](https://github.com/kenneth0710/asistente-pruebas-pytest/blob/main/docs/modulos/modulo2_requisitos_y_bitacora.pdf).
+
+Caso 2, línea «Qué hice»:
+- **Qué hice:** Corregí los resultados de la matriz, eliminé las relaciones inventadas y ajusté los elementos del diseño que no coincidían con los requisitos. Mantuve la alternativa A, correspondiente a una CLI en Python, un plugin de pytest y GitHub Actions. La decisión quedó registrada en el ADR-001, incluido en el [documento de diseño del módulo 3](https://github.com/kenneth0710/asistente-pruebas-pytest/blob/main/docs/modulos/modulo3_diseno.pdf).
+
+Caso 4, línea «Fase»:
+- **Fase:** Código y pruebas, semanas 6 y 7.
+
+Tabla «Evidencias de verificación» de los anexos (no tiene fila para los casos 1 y 2):
+| Implementación inicial de HU-07 | [Commit 9b75801](https://github.com/kenneth0710/asistente-pruebas-pytest/commit/9b75801). |
+
+Tarea: entrega solo las cuatro líneas corregidas, en Markdown, listas para reemplazar:
+1. La línea «Qué hice» del caso 1, que agregue el commit fad31af y diga con honestidad que la corrección se hizo en el documento entregado en la semana 3 y se publicó en el repositorio con ese commit.
+2. La línea «Qué hice» del caso 2, con el mismo tratamiento (documento de la semana 4).
+3. La línea «Fase» del caso 4, para que la fase sea Pruebas y aclare que el cambio defectuoso venía de la revisión de código de la semana 6.
+4. Una fila nueva para la tabla de evidencias de verificación, que vaya antes de la fila «Implementación inicial de HU-07», con el commit fad31af.
+
+No cambies nada más del informe ni inventes datos que no estén en este mensaje.

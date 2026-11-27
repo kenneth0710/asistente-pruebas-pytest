@@ -184,8 +184,10 @@ asistente-pruebas-pytest/
 │   │   ├── modulo2_requisitos_y_bitacora.pdf
 │   │   └── modulo3_diseno.pdf
 │   ├── prompts/
+│   ├── informe_final.pdf
 │   ├── plan_operacion.md
-│   └── revision_configuracion.md
+│   ├── revision_configuracion.md
+│   └── sustentacion.pdf
 ├── tests/
 │   ├── test_aceptacion_hu07.py
 │   ├── test_hu07_abuso.py
@@ -200,6 +202,7 @@ asistente-pruebas-pytest/
 ├── .gitignore
 ├── bitacora_ia.md
 ├── Dockerfile
+├── informe_final.md
 ├── LICENSE
 ├── pyproject.toml
 ├── README.md
@@ -226,20 +229,25 @@ La IA se utilizó como apoyo durante los diferentes módulos del proyecto, las s
 
 **Semana 7:** ChatGPT propuso los casos de prueba con particiones de equivalencia, valores límite y tabla de decisión, escribió las pruebas a partir de la tabla revisada, corrigió el defecto D-01 que esas pruebas encontraron y generó los datos sintéticos. Cada caso y cada prueba se revisaron contra la regla; el detalle está en `registro_pruebas.md`.
 
-**Cierre del proyecto (26 de noviembre):** ChatGPT propuso el plan de cierre, el pipeline de integración continua, el análisis de cobertura, las pruebas de aceptación, el Dockerfile y el plan de operación. Las propuestas fueron sometidas a revisión humana antes de su aceptación. El proceso está documentado en las entradas 18 a 24 de `bitacora_ia.md`.
+**Cierre del proyecto (26 de noviembre):** ChatGPT propuso el plan de cierre, el pipeline de integración continua, el análisis de cobertura, las pruebas de aceptación, el Dockerfile y el plan de operación. Las propuestas fueron sometidas a revisión humana antes de su aceptación. El proceso está documentado en las entradas 18 a 26 de `bitacora_ia.md`.
 
 Las sugerencias realizadas por la IA se verificaron mediante pruebas antes de integrarse. El detalle del proceso se encuentra en `bitacora_ia.md` y el informe de seguridad en `revision_seguridad.md`.
 
-La [`bitácora de IA`](bitacora_ia.md) contiene 24 entradas, clasificadas de la siguiente manera:
+La [`bitácora de IA`](bitacora_ia.md) contiene 26 entradas, clasificadas de la siguiente manera:
 
 | Resultado de la revisión | Cantidad |
 |---|---:|
 | Aceptadas | 10 |
-| Aceptadas con cambios | 10 |
+| Aceptadas con cambios | 12 |
 | Rechazadas | 4 |
-| **Total** | **24** |
+| **Total** | **26** |
 
 Los prompts utilizados se encuentran en [`docs/prompts/`](docs/prompts/). La bitácora permite consultar las decisiones tomadas durante la revisión de los resultados generados por la inteligencia artificial.
+
+## Entrega final
+
+- [Informe final](informe_final.md) (también en [PDF](docs/informe_final.pdf)).
+- [Diapositivas de la sustentación](docs/sustentacion.pdf).
 
 ## Autor y licencia
 **Autor:** Kenneth Ramírez Burgos.

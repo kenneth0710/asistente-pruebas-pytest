@@ -1,0 +1,29 @@
+Actúa como consultor que rediseña una presentación para que se entienda leyendo solo los títulos.
+
+Contexto: vamos a mejorar las 8 diapositivas de la sustentación que escribiste. Se mantienen las reglas: máximo 8 diapositivas, 10 minutos con este reparto (1; 1,5; 1,5; 1; 1; 2; 1; 1), solo hechos del informe final, nada pendiente presentado como terminado, y «muestra, no cuentes». Ya decidí qué gráfico o esquema lleva cada diapositiva (los datos son reales); tú escribes los textos.
+
+Reglas para los títulos (títulos de acción): una sola oración con verbo que diga la conclusión de la diapositiva, no el tema; entre 8 y 14 palabras; con la cifra principal solo si está en la diapositiva; sin relleno («diversos», «clave», «es importante»). Leídos en orden, los 8 títulos deben formar el argumento completo.
+
+Plan de diapositivas y datos de cada esquema:
+
+1. Portada con apertura SCQA (1 min). Esquema: cuatro bandas Situación, Complicación, Pregunta y Respuesta. Datos: el equipo de 5 estudiantes prueba a mano 1 o 2 de cada 5 criterios; el repositorio tiene .env con claves y datos de unos 300 clientes que no pueden salir a una IA externa; el asistente propone pruebas pytest desde los criterios y la HU-07 (filtro de exclusión) va primero. Lleva también: nombre, seminario y fecha (27 de noviembre de 2026).
+
+2. Fases 1 a 3 con IA (1,5 min). Esquema: flujo de 6 fases del ciclo de vida con las 3 primeras resaltadas; debajo, una tarjeta por fase con tres líneas cortas: herramienta, qué hizo la IA, qué encontré al verificar. Datos: Fundamentos (Claude: banco de 10 prompts; verificado ejecutando el código, por ejemplo regex con 6 casos); Requisitos (Gemini: HU-01 a HU-10 y RNF; encontré 11 requisitos inventados, como «mínimo 1, máximo 100» en HU-03); Diseño (Gemini 3.8 Flash: 3 arquitecturas y matriz; sumas mal hechas 138/130/98 en vez de 140/132/103).
+
+3. Fases 4 a 6 con IA (1,5 min). Esquema: el mismo flujo con las fases 4 a 6 resaltadas y tarjetas iguales; Código (ChatGPT: HU-07, revisión de seguridad, agente en rama; verificado con errores sembrados y revisión del diff), Pruebas (ChatGPT: 100 casos, quedaron 77; las pruebas desde la regla hallaron D-01), Operación (ChatGPT: pipeline, Docker, plan; etiqueta 1.0.0 inventada y acciones con Node.js 20 obsoleto). Al lado, gráfico de barras apiladas de la bitácora por periodo (aceptadas / con cambios / rechazadas): semana 5: 2/2/2; semana 6: 3/1/1; semana 7: 3/2/1; cierre: 3/6/0; total 11/11/4 de 26. Escribe una anotación corta para el gráfico.
+
+4. Resultados verificables (1 min). Esquema: tres indicadores (102 pruebas en verde; cobertura 96 % de líneas y 92,86 % de ramas; pipeline 54 s contra el límite de 300 s de RNF-03), una tira con las 6 historias Must donde solo HU-07 está terminada (HU-01, 02, 03, 04 y 10 pendientes) y la captura de GitHub Actions con main en verde.
+
+5. Demostración del pipeline (1 min). Esquema: flujo del pipeline ruff → pytest con cobertura → pip-audit → construir imagen Docker → pruebas en el contenedor; al lado la captura de la ejecución 45876043174 en rojo («1 failed, 99 passed»). Escribe una anotación corta para la captura.
+
+6. Verificación: lo que la IA hizo mal (2 min). Esquema: matriz con 5 filas (Requisitos, Diseño, Código, Pruebas, Operación) y 3 columnas: qué propuso la IA, qué estaba mal, cómo lo detecté. Usa los 5 casos del informe (A requisitos inventados; B matriz mal sumada; C prueba que aprobaba enviar .ENV, commit 4afca43; D defecto D-01 en «..», pruebas en rojo 3361726 y corrección 3238135; E etiqueta 1.0.0 y mensaje exacto en la prueba de aceptación). La fila D-01 va resaltada. Debajo, una franja de evidencia con la fila del registro: «test_no_devolver_archivos_excluidos | Descartada | con una función que devuelve siempre [] seguía en verde», y el dato de mutaciones: 9 manuales, 7 detectadas, 2 equivalentes; RNF-08 no demostrado. Cada celda de la matriz: máximo 10 palabras.
+
+7. Ética (1 min). Esquema: 5 columnas (Datos personales, Ley 1581; Sesgo; Transparencia; Responsabilidad; Propiedad intelectual), cada una con la decisión en máximo 14 palabras, y una franja inferior con el dilema principal en una oración. La columna de Transparencia debe mencionar a Claude Code como agente y que las decisiones fueron mías.
+
+8. Aprendizajes y pendientes (1 min). Esquema: dos columnas, «Lo que aprendí» (3 puntos) y «Lo que falta» (CLI y plugin con Gemini; HU-01, 02, 03, 04 y 10; RNF-08; A6 y A7 con el docente; actualizar acciones de Node.js 20), y una frase de cierre.
+
+Tarea: para cada diapositiva entrega el título de acción, el texto de cada elemento del esquema y la nota del orador (60 a 110 palabras, primera persona). Al final, escribe los 8 títulos seguidos como un párrafo para comprobar que forman el argumento, y conserva las 6 respuestas a las preguntas probables que ya escribiste (con la bitácora en 26 entradas: 11 aceptadas, 11 con cambios y 4 rechazadas).
+
+Formato: un solo bloque de código Markdown.
+
+Restricciones: ninguna cifra, commit o hecho fuera de este mensaje o del informe; textos cortos (las tarjetas y celdas son para leerse de lejos); los tiempos suman 10 minutos.

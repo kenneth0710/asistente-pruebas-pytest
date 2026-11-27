@@ -1,0 +1,6 @@
+Revisé el informe contra la bitácora, el registro y el repositorio: las cifras, los commits y los enlaces coinciden, y no presenta como terminado nada pendiente. Hay dos filas de la tabla de la sección 6 que corregir:
+
+1. Sesgo: dice que «las pruebas propuestas por la IA asumían un comportamiento habitual de Linux». Eso no es exacto, y el error fue mío en los datos que te di. Como explica el caso 3, el supuesto de que las mayúsculas se distinguen estaba en mi contrato, y la prueba de la IA lo siguió sin cuestionarlo. Redacta la fila con eso: el contrato inicial y la prueba de la IA asumían el comportamiento de Linux, y ni yo ni la IA lo cuestionamos hasta revisarlo contra RNF-06.
+2. Transparencia: falta la frase sobre quién decidió. Después de la oración de Claude Code debe decir que las decisiones y la aprobación de cada entrega fueron mías.
+
+Tarea: entrega solo esas dos filas de la tabla, completas, en un bloque de código Markdown. No cambies nada más.

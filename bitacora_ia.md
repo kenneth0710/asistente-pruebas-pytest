@@ -7,7 +7,7 @@ Asistente usado:
 - Semana 5: ChatGPT (OpenAI), versión web, modo chat, en una sola conversación el 7 de noviembre de 2026. Le di como contexto el contrato y las pruebas. El código lo pegué y lo ejecuté en VS Code con pytest.
 - Semana 6: ChatGPT, versión web, en un chat nuevo el 14 de noviembre de 2026. Lo usé en modo chat para la revisión, las docstrings y el README, y como agente delimitado en la rama `agente/pruebas-abuso`. Sus entradas empiezan en la sección «Semana 6».
 - Semana 7: ChatGPT, versión web, en un chat nuevo el 21 de noviembre de 2026 (entradas 12 a 17).
-- Cierre del proyecto (módulo 6, cobertura, aceptación, plan de operación y README): ChatGPT, versión web, en un chat nuevo el 26 de noviembre de 2026 (entradas 18 a 24).
+- Cierre del proyecto (módulo 6, cobertura, aceptación, plan de operación, README, informe final y diapositivas): ChatGPT, versión web, en un chat nuevo el 26 de noviembre de 2026 (entradas 18 a 26). Claude Code operó como agente el navegador y el repositorio (ver la fila «Transparencia» del informe final).
 
 **Uso de IA de los módulos 1 a 3.** Está registrado dentro de cada documento, en [`docs/modulos/`](docs/modulos/):
 - **Semana 2:** el [banco de 10 prompts](docs/modulos/modulo1_banco_de_prompts.pdf), hecho con Claude, con la evaluación de cada respuesta. La [propuesta](docs/modulos/modulo1_propuesta.pdf) declara que usé Claude para la redacción.
@@ -452,30 +452,80 @@ Commit de partida: `7a2f207`. El registro completo está en [`registro_pruebas.m
   - Instalación, Ejecución y Autor quedaron sin cambios.
 - **Commit relacionado:** el de esta entrada
 
+### Entrada 25
+
+- **Fecha:** 2026-11-26
+- **Prompt o sugerencia:** Prompt 26 ([`prompt26_informe_final.txt`](docs/prompts/prompt26_informe_final.txt)). Le di la plantilla del profesor y solo hechos verificados: cifras, commits, enlaces, casos de error, estado y ética. Le pedí redactar [`informe_final.md`](informe_final.md). Después le pedí corregir dos filas con el prompt 27 ([`prompt27_ajustes_informe.txt`](docs/prompts/prompt27_ajustes_informe.txt)).
+- **Decisión:** Aceptada con cambios
+- **Por qué:** Siguió la plantilla y no presentó como terminado nada pendiente. Tenía dos fallas:
+  - La fila «Sesgo» atribuía a la IA un supuesto de Linux que en realidad venía de mi contrato (el error fue mío en los datos que le di).
+  - La fila «Transparencia» omitió que las decisiones y la aprobación de cada entrega fueron mías.
+
+  Las dos filas se corrigieron. Después actualicé a mano las cifras de la bitácora (de 24 a 26 entradas) al registrar esta entrada y la siguiente.
+- **Verificación:**
+  - Comprobé los 31 enlaces del informe: cada archivo existe en `main` y cada commit existe en el repositorio.
+  - Comparé cada cifra con la bitácora, el registro y el pipeline.
+  - El PDF tiene 10 páginas, y los anexos empiezan en la 9 (la plantilla pide de 6 a 10 sin anexos).
+- **Commit relacionado:** el de esta entrada
+
+### Entrada 26
+
+- **Fecha:** 2026-11-26
+- **Prompt o sugerencia:** Hubo dos versiones de las diapositivas:
+  1. **Primera versión:** prompt 28 ([`prompt28_diapositivas.txt`](docs/prompts/prompt28_diapositivas.txt)). Pedí 8 diapositivas con el reparto de tiempo del material «Tendencias y sustentación», con nota del orador y respuestas a las preguntas probables.
+  2. **Rediseño:** prompt 29 ([`prompt29_diapositivas_v2.txt`](docs/prompts/prompt29_diapositivas_v2.txt)), siguiendo los métodos de las skills de consultoría para diapositivas:
+     - títulos de acción que dicen la conclusión;
+     - apertura con situación, complicación, pregunta y respuesta;
+     - un gráfico o esquema con datos reales en cada diapositiva;
+     - revisión final con lista de chequeo.
+
+     Yo elegí el gráfico de cada diapositiva y ChatGPT escribió los textos. Después le pedí una corrección con el prompt 30 ([`prompt30_correccion_diapositiva5.txt`](docs/prompts/prompt30_correccion_diapositiva5.txt)).
+
+  El resultado está en [`docs/sustentacion.pdf`](docs/sustentacion.pdf). Las notas del orador se usan para ensayar y no se publican en el repositorio.
+- **Decisión:** Aceptada con cambios
+- **Por qué:**
+  - Los 8 títulos, leídos en orden, forman el argumento.
+  - Los tiempos suman 10 minutos con el reparto del profesor.
+  - RNF-08 y la CLI aparecen como pendientes.
+  - La respuesta a «¿qué hiciste tú y qué hizo la IA?» menciona a ChatGPT, Gemini, Claude y Claude Code.
+
+  Pero la diapositiva 5 tenía un error de hecho. Decía que la ejecución en rojo «no continuó hacia Docker», y cuando se hizo esa ejecución (45876043174, sobre `84ef55e`) el trabajo `docker` todavía no existía: se agregó en `051aae4`. ChatGPT lo corrigió con el prompt 30. Yo solo armé el diseño en HTML (16:9) y actualicé los conteos de la bitácora al registrar esta entrada.
+- **Verificación:** Comprobé cada cifra contra la bitácora, el registro y el pipeline, y las fechas de los commits contra la ejecución en rojo. Las evidencias son reales:
+  - capturas de GitHub Actions;
+  - la salida de cobertura;
+  - la fila del registro;
+  - los commits de D-01.
+
+  El PDF tiene 8 páginas.
+- **Hallazgo al tomar las capturas:** GitHub Actions avisa «Node.js 20 is deprecated» para `actions/checkout@v4.2.2`, `actions/setup-python@v5.6.0` y `actions/upload-artifact@v4.6.2`, las versiones que eligió ChatGPT en la entrada 19. Ya existen las versiones 7 de las tres. Ni ChatGPT ni actionlint lo detectaron. Quedó registrado en [`docs/revision_configuracion.md`](docs/revision_configuracion.md) como pendiente de mantenimiento.
+- **Commit relacionado:** el de esta entrada
+
 ## Resumen del cierre
 
 | Decisión | Cantidad |
 |---|---|
 | Aceptadas | 2 (entradas 19 y 20) |
-| Aceptadas con cambios | 5 (entradas 18, 21, 22, 23 y 24) |
+| Aceptadas con cambios | 7 (entradas 18, 21, 22, 23, 24, 25 y 26) |
 | Rechazadas | 0 |
 
-En el cierre no rechacé ninguna respuesta completa, pero 5 de 7 necesitaron cambios. Todos venían del mismo tipo de error: un dato que no salía del proyecto.
+En el cierre no rechacé ninguna respuesta completa, pero 7 de 9 necesitaron cambios. Todos venían del mismo tipo de error: un dato que no salía del proyecto.
 - un tiempo de sustentación equivocado;
 - un mensaje de error comparado con el texto del código en vez de con el criterio;
 - una regla oculta que sacaba `.asistenteignore` de la lista;
 - una etiqueta de imagen `1.0.0` inventada;
-- enlaces y secciones del README perdidos al reescribirlo.
+- enlaces y secciones del README perdidos al reescribirlo;
+- en el informe, un supuesto atribuido a la IA que venía de mi contrato (dato mío equivocado) y una declaración incompleta;
+- en las diapositivas, un hecho falso sobre el trabajo `docker` en la ejecución en rojo.
 
 Los encontré comparando cada respuesta con su fuente: la tarea, el criterio de aceptación y `pyproject.toml`.
 
-## Resumen de toda la bitácora (entradas 1 a 24)
+## Resumen de toda la bitácora (entradas 1 a 26)
 
 | Decisión | Semana 5 | Semana 6 | Semana 7 | Cierre | Total |
 |---|---|---|---|---|---|
 | Aceptadas | 2 | 3 | 3 | 2 | 10 |
-| Aceptadas con cambios | 2 | 1 | 2 | 5 | 10 |
+| Aceptadas con cambios | 2 | 1 | 2 | 7 | 12 |
 | Rechazadas | 2 | 1 | 1 | 0 | 4 |
-| **Total** | 6 | 5 | 6 | 7 | **24** |
+| **Total** | 6 | 5 | 6 | 9 | **26** |
 
-Menos de la mitad de las respuestas de la IA (10 de 24) se aceptaron sin cambios.
+Menos de la mitad de las respuestas de la IA (10 de 26) se aceptaron sin cambios.

@@ -1,0 +1,5 @@
+Revisé los 8 títulos, los esquemas y las notas: el argumento se sostiene, las cifras cuadran con el informe y los tiempos suman 10 minutos. Hay un error de hecho en la diapositiva 5.
+
+La ejecución en rojo 45876043174 se hizo cuando el pipeline solo tenía el trabajo ci (commit 84ef55e). El trabajo docker se agregó después (commit 051aae4). Por eso son falsas la anotación «el pipeline falló y no continuó hacia Docker» y la frase de la nota «El trabajo de Docker dependía del éxito del primer trabajo, por lo que el fallo impedía continuar». Lo que sí es cierto: la ejecución falló con «1 failed, 99 passed» en el trabajo ci, y hoy el trabajo docker tiene «needs: ci», así que un fallo igual detendría Docker.
+
+Tarea: entrega solo la anotación de la captura y la nota del orador de la diapositiva 5, corregidas. No cambies nada más.

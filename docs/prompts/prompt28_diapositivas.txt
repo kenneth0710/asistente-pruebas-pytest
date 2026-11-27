@@ -1,0 +1,17 @@
+Actúa como estudiante que prepara la sustentación de su proyecto final.
+
+Contexto: la sustentación dura 10 minutos de presentación y 4 de preguntas, con máximo 8 diapositivas en PDF. Debe responder cinco preguntas: qué problema resolví, en qué fases usé IA, qué evidencias lo muestran, cómo verifiqué lo que hizo la IA y qué decisiones éticas tomé. Lo que más se evalúa es la verificación. El material del profesor sugiere este reparto de los 10 minutos: problema y solución 1, fases del ciclo de vida con IA 3, demostración y evidencias 2, verificación realizada 2, reflexión ética 1, aprendizajes y cierre 1. Y dice «muestra, no cuentes»: una ejecución del pipeline en verde convence más que decir «tengo integración continua»; una fila del registro de pruebas descartadas convence más que decir «revisé lo que hizo la IA».
+
+Usa SOLO el contenido del informe final que escribiste en este chat (con las dos filas corregidas de la sección 6). Evidencias reales que puedo mostrar como imagen o texto:
+- la lista de ejecuciones de GitHub Actions en main, todas en verde, y la ejecución en rojo 45876043174 («1 failed, 99 passed»);
+- la salida real de cobertura: «asistente\exclusion.py 50 2 28 2 95% 58, 106» y «102 passed»;
+- una fila del registro de pruebas: «test_no_devolver_archivos_excluidos | Descartada | Débil y redundante: con una función que devuelve siempre [] seguía en verde»;
+- el diff del caso D-01 (la revisión de «..» movida antes de rstrip(" .")).
+
+Tarea: escribe el contenido de exactamente 8 diapositivas.
+
+Formato: para cada diapositiva: número, título corto (máximo 8 palabras), de 3 a 5 viñetas cortas (máximo 14 palabras cada una), la evidencia que se muestra (si aplica, una de las de arriba), el tiempo en minutos y la nota del orador (lo que digo, de 60 a 110 palabras, en primera persona). La diapositiva 1 lleva título del proyecto, nombre (Kenneth Ramírez Burgos), seminario y fecha (27 de noviembre de 2026). Al final, una lista de respuestas cortas (2 o 3 frases) a estas preguntas probables: ¿Cómo sabes que el código que generó la IA es correcto? ¿Qué parte hiciste tú y qué parte hizo la IA? ¿Qué pasa si la IA te sugirió algo inseguro? ¿Usaste datos reales? Si tuvieras que mantener este sistema dos años, ¿qué te preocuparía? ¿Qué no harías con IA en este proyecto?
+
+Entrégalo todo en un solo bloque de código Markdown.
+
+Restricciones: los tiempos suman exactamente 10 minutos; ninguna cifra, commit o hecho que no esté en el informe; no presentes como terminado lo pendiente (la CLI, las otras historias Must y RNF-08); la respuesta a «qué hiciste tú y qué hizo la IA» debe mencionar con honestidad a ChatGPT, Gemini, Claude y el agente Claude Code, como dice la fila de transparencia.

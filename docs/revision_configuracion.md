@@ -42,13 +42,14 @@ Revisé los tres archivos con las seis preguntas de la semana: imagen base, secr
 | .dockerignore | Archivos fuera | `.env` (también en subcarpetas), `.git`, `.venv`, cachés, `__pycache__` y reportes de cobertura. |
 | ci.yml:45-60 | Trabajo `docker` | `needs: ci`, el mismo checkout sin credenciales y solo comandos `docker`, sin acciones de terceros ni secretos. `docker run` devuelve el código de salida de pytest, así que una prueba fallida pone el trabajo en rojo. |
 | ci.yml:57, 60 | **Problema encontrado:** etiqueta `asistente-pruebas:1.0.0` | La etiqueta no salía de ningún dato del proyecto: `pyproject.toml` dice `0.1.0`. Se la señalé a ChatGPT (prompt 21) y la cambió a `0.1.0`. |
+| ci.yml:17, 22, 39, 52 | **Hallazgo posterior:** versiones viejas | GitHub Actions avisa en cada ejecución: «Node.js 20 is deprecated» para `actions/checkout@v4.2.2`, `actions/setup-python@v5.6.0` y `actions/upload-artifact@v4.6.2`. Ya existen las versiones 7 de las tres. ChatGPT eligió versiones fijas pero viejas, y ni actionlint ni hadolint lo detectaron: lo vi en las anotaciones de la ejecución. Hoy no falla, porque GitHub las fuerza a Node.js 24. **Pendiente:** actualizarlas en una rama y comprobar el pipeline (plan de operación, sección 4.3). |
 | ci.yml | Cambio no pedido | En el trabajo `ci`, ChatGPT puso comillas en `uses:` y `runs-on:`. No cambia el comportamiento (ver la fila «`uses:` sin comillas») y se acepta. |
 
 ## 3. Lo que encontraron las herramientas
 
 | Herramienta | Avisos | ¿Coinciden con mis hallazgos? | ¿Qué no encontró? |
 |---|---|---|---|
-| actionlint | 0 | Sí: no hay errores de sintaxis ni de tipos. | No revisa si las etiquetas existen ni si una versión puede moverse; eso lo revisé con `gh api`. |
+| actionlint | 0 | Sí: no hay errores de sintaxis ni de tipos. | No revisa si las etiquetas existen ni si una versión puede moverse (lo revisé con `gh api`), ni avisa que las acciones usan Node.js 20, que está obsoleto (lo mostró GitHub en la ejecución). |
 | hadolint | 0 | Sí: la imagen base está fijada, `pip` usa `--no-cache-dir` y la última instrucción `USER` no es root. | No sabe si la etiqueta existe en Docker Hub (lo revisé con su API), ni si la etiqueta de la imagen coincide con la versión del proyecto (`1.0.0` contra `0.1.0`), ni si las pruebas necesitan archivos que no se copian. |
 
 ## 4. Verificación
